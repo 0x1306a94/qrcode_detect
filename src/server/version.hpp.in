@@ -1,0 +1,8 @@
+#ifndef __qrcode_detect_server_version_hpp__
+#define __qrcode_detect_server_version_hpp__
+
+#define QRCODE_DETECT_SERVER_VERSION "@QRCODE_DETECT_SERVER_VERSION@"
+#define QRCODE_DETECT_SERVER_GIT_BRANCH "@QRCODE_DETECT_SERVER_GIT_BRANCH@"
+#define QRCODE_DETECT_SERVER_GIT_HASH "@QRCODE_DETECT_SERVER_GIT_HASH@"
+
+#endif /* __qrcode_detect_server_version_hpp__ */

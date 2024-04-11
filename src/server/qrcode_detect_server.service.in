@@ -1,0 +1,14 @@
+[Unit]
+Description=qrcode_detect_server
+After=network.target
+
+
+[Service]
+Type=forking
+Environment="DISABLE_CONSOLE_LOG=1"
+PIDFile=/run/qrcode_detect_server.pid
+ExecStart=/opt/qrcode_detect_server/bin/qrcode_detect_server --port 9999 --model /opt/qrcode_detect_server/models --log /var/log/qrcode_detect_server --verbose --daemon --pid /run/qrcode_detect_server.pid
+ExecStop=/bin/kill -s QUIT $MAINPID
+
+[Install]
+WantedBy=multi-user.target 

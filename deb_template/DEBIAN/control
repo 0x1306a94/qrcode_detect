@@ -1,0 +1,10 @@
+Package: qrcode-detect-server
+Version: ${Version}
+Section: utils
+Priority: optional
+Architecture: amd64
+Installed-Size: ${Installed-Size}
+Maintainer: kk<0x1306a94@gmail.com>
+Provides: kk
+Description: qrcode detect server
+Essential: no

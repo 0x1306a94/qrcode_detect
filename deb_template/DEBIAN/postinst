@@ -1,0 +1,23 @@
+#!/bin/sh -e
+
+set -e
+
+# ref: postinst in sudo package
+
+case "$1" in
+configure)
+
+  echo "Installed /opt/qrcode_detect_server"
+  if [ ! -L /lib/systemd/system/qrcode_detect_server.service ]; then
+    ln -s /opt/qrcode_detect_server/service/qrcode_detect_server.service /lib/systemd/system/qrcode_detect_server.service
+    systemctl enable qrcode_detect_server
+  fi
+
+  if [ ! -L /usr/local/bin/qrcode_detect_server ]; then
+    ln -s /opt/qrcode_detect_server/bin/qrcode_detect_server /usr/local/bin/qrcode_detect_server
+    echo "Installed /usr/local/bin/qrcode_detect_server"
+  fi
+
+  ;;
+
+esac

@@ -1,0 +1,36 @@
+#!/bin/sh -e
+
+case "$1" in
+purge)
+  #
+  ;;
+
+remove)
+
+  if [ -L /lib/systemd/system/qrcode_detect_server.service ]; then
+    service qrcode_detect_server stop
+    systemctl disable qrcode_detect_server
+    rm -rf /lib/systemd/system/qrcode_detect_server.service
+  fi
+
+  if [ -L /usr/local/bin/qrcode_detect_server ]; then
+    rm -rf /usr/local/bin/qrcode_detect_server
+    echo "Removed /usr/local/bin/qrcode_detect_server"
+  fi
+
+  echo "Removed /opt/qrcode_detect_server"
+  ;;
+
+upgrade | deconfigure)
+  #
+  ;;
+
+abort-upgrade | failed-upgrade)
+  #
+  ;;
+
+*)
+  echo "unknown argument --> $1" >&2
+  exit 0
+  ;;
+esac
