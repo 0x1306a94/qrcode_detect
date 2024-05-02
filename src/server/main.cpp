@@ -131,12 +131,6 @@ void delete_pidfile(const std::string &path) {
 }
 
 static hv::HttpServer *server = nullptr;
-void server_on_exit(void) {
-    SPDLOG_INFO("server_on_exit");
-    spdlog::drop_all();
-    spdlog::shutdown();
-}
-
 void signal_exit_handler(int sig) {
     SPDLOG_INFO("signal_exit_handler");
     if (server != nullptr) {
@@ -219,7 +213,6 @@ int main(int argc, char *argv[]) {
         create_pidfile(pidfile);
     } while (0);
 
-    atexit(server_on_exit);
     //    signal(SIGINT, signal_exit_handler);
     signal(SIGQUIT, signal_exit_handler);
 
@@ -241,5 +234,6 @@ int main(int argc, char *argv[]) {
     if (!pidfile.empty()) {
         delete_pidfile(pidfile);
     }
+    spdlog::shutdown();
     return EXIT_SUCCESS;
 }
