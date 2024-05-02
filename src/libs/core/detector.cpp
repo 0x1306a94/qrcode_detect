@@ -13,12 +13,6 @@
 namespace qrcode {
 namespace detect {
 
-Detector::Detector() {
-}
-
-Detector::~Detector() {
-}
-
 std::optional<Result> Detector::DetectFromBase64(const std::string &source) {
     return std::nullopt;
 }

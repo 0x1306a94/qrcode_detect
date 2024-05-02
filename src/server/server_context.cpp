@@ -17,7 +17,7 @@ Context *Context::Current() {
     return g_context;
 }
 
-std::string Context::GetModelDir() {
+std::string Context::GetModelDir() const {
     return g_context->m_model_dir;
 }
 

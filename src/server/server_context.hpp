@@ -16,7 +16,8 @@ class Context {
     static Context *Current();
     static void Init(const std::string model_dir);
 
-    std::string GetModelDir();
+    std::string GetModelDir() const;
+
   private:
     std::string m_model_dir;
 };

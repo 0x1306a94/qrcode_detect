@@ -23,46 +23,17 @@
 #include "../image_downloader.hpp"
 #include "../reqparmas.hpp"
 
+#include "../detector_factory.hpp"
 #include "../server_context.hpp"
 
 #include <core/AutoBuffer.hpp>
 #include <core/detect_result.hpp>
-#include <core/opencv_detector.hpp>
-#include <core/wechat_detector.hpp>
-#include <core/yolov3_detector.hpp>
-#include <core/zbar_detector.hpp>
+#include <core/detector.hpp>
 
 using std::chrono::duration_cast;
 using std::chrono::milliseconds;
 
 namespace handler {
-
-qrcode::detect::Detector *CurrentThreadDetector(reqparmas::DetectorType type) {
-    switch (type) {
-        case reqparmas::DetectorType::Wechat: {
-            std::string model_dir = context::Context::Current()->GetModelDir();
-            thread_local qrcode::detect::WechatDetector *_detector = new qrcode::detect::WechatDetector(model_dir + "/wechat_qrcode");
-            return _detector;
-        }
-        case reqparmas::DetectorType::YoloV3: {
-            std::string model_dir = context::Context::Current()->GetModelDir();
-            thread_local qrcode::detect::Yolov3Detector *_detector = new qrcode::detect::Yolov3Detector(model_dir + "/yolov3-qrcode");
-            return _detector;
-        }
-        case reqparmas::DetectorType::OpenCV: {
-            thread_local qrcode::detect::OpencvDetector *_detector = new qrcode::detect::OpencvDetector();
-            return _detector;
-        }
-        case reqparmas::DetectorType::ZBar: {
-            thread_local qrcode::detect::ZbarDetector *_detector = new qrcode::detect::ZbarDetector();
-            return _detector;
-        }
-        default: {
-            thread_local qrcode::detect::Detector *_detector = new qrcode::detect::Detector();
-            return _detector;
-        }
-    }
-}
 
 int Detect::detect(const HttpContextPtr &ctx) {
     auto json = ctx->request->GetJson();
@@ -96,7 +67,8 @@ int Detect::detect(const HttpContextPtr &ctx) {
                 //                return SendFail(ctx, 400, fmt::format("{} 无法加载", url));
             }
             sw.reset();
-            auto detector = CurrentThreadDetector(params.type);
+            qrcode::detect::DetectorFactory detectorFactory{};
+            auto detector = detectorFactory.Create(params.type, *context::Context::Current());
             auto result = detector->DetectFromBuffer(buffer);
             if (result) {
                 results.push_back(result.value());
@@ -112,7 +84,8 @@ int Detect::detect(const HttpContextPtr &ctx) {
             break;
         }
         std::vector<qrcode::detect::Result> results;
-        auto detector = CurrentThreadDetector(params.type);
+        qrcode::detect::DetectorFactory detectorFactory{};
+        auto detector = detectorFactory.Create(params.type, *context::Context::Current());
         for (const auto &item : params.base64) {
             auto result = detector->DetectFromBase64(item);
             if (result) {
@@ -134,7 +107,8 @@ int Detect::detectFile(const HttpContextPtr &ctx) {
     if (content.empty()) {
         return SendFail(ctx, 400, "file empty");
     }
-    auto detector = CurrentThreadDetector(type);
+    qrcode::detect::DetectorFactory detectorFactory{};
+    auto detector = detectorFactory.Create(type, *context::Context::Current());
     auto result = detector->DetectFromBytes((const unsigned char *)content.data(), content.size());
     if (result) {
         return SendSuccess(ctx, result.value());
