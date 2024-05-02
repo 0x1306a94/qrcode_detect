@@ -29,8 +29,12 @@ void Router::Register(hv::HttpService &service) {
     service.POST("/detect", handler::Detect::detect);
     service.POST("/detect_file", handler::Detect::detectFile);
 
-    service.GET("/paths", [&service](HttpRequest *req, HttpResponse *resp) {
-        return resp->Json(service.Paths());
+    service.GET("/paths", [](const HttpContextPtr &ctx) -> int{
+        return ctx->sendJson(ctx->service->Paths());
+    });
+
+    service.GET("/health", [](const HttpContextPtr &ctx) -> int {
+        return handler::SendSuccess(ctx);
     });
 };
 

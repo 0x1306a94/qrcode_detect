@@ -118,3 +118,7 @@ curl --location 'http://127.0.0.1:9999/detect_file' \
 --form 'type="1"' \
 --form 'file=@"/Users/king/Documents/lanhu_icon/IMG_7562.jpg"'
 ```
+* 健康检查
+```bash
+curl --location 'http://127.0.0.1:9999/health'
+```
