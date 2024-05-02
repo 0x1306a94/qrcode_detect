@@ -11,6 +11,8 @@
 #include "base64.hpp"
 #include "detect_result.hpp"
 
+#include "align.hpp"
+
 #ifndef SPDLOG_ACTIVE_LEVEL
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
 #endif
@@ -51,28 +53,6 @@ class Yolov3Detector::Implement {
     }
 
     ~Implement() {
-    }
-
-    void AddInset(cv::Rect &rect, int inset) {
-        rect.x += inset;
-        rect.y += inset;
-        rect.width -= 2 * inset;
-        rect.height -= 2 * inset;
-    }
-
-    void AdjustRect(cv::Rect &rect, int imgWidth, int imgHeight) {
-        if (rect.x < 0) {
-            rect.x = 0;
-        }
-        if (rect.y < 0) {
-            rect.y = 0;
-        }
-        if (rect.x + rect.width > imgWidth) {
-            rect.x = imgWidth - rect.width;
-        }
-        if (rect.y + rect.height > imgHeight) {
-            rect.y = imgHeight - rect.height;
-        }
     }
 
     std::optional<Result> Detect(const cv::Mat &image) {
@@ -121,23 +101,23 @@ class Yolov3Detector::Implement {
         cv::dnn::NMSBoxes(boxes, confidences, this->confThreshold, this->nmsThreshold, indices);
 
         std::vector<Value> values;
-        cv::Rect originRect(0, 0, img_w, img_h);
+
+        Align aligner;
+        float padding_w = 0.1f, padding_h = 0.1f;
+        auto min_padding = 15;
         for (size_t i = 0; i < indices.size(); ++i) {
             int idx = indices[i];
             cv::Rect box = boxes[idx];
-            cv::Rect fixRect(box);
 
-            AddInset(fixRect, -10);
-            AdjustRect(fixRect, img_w, img_h);
+            cv::Rect crop_roi;
+            cv::Mat cropped = aligner.crop(image, box, padding_w, padding_h, min_padding, crop_roi);
+            cv::cvtColor(cropped, cropped, cv::COLOR_BGR2GRAY);
 
-            cv::Mat qr_region = image(fixRect).clone();
-            cv::cvtColor(qr_region, qr_region, cv::COLOR_BGR2GRAY);
-
-            zbar::Image zbar_image(fixRect.width, fixRect.height, "Y800", qr_region.data, fixRect.width * fixRect.height);
+            zbar::Image zbar_image(crop_roi.width, crop_roi.height, "Y800", cropped.data, crop_roi.width * crop_roi.height);
             scanner.scan(zbar_image);
 
             for (zbar::Image::SymbolIterator symbol = zbar_image.symbol_begin(); symbol != zbar_image.symbol_end(); ++symbol) {
-                values.emplace_back(symbol->get_data(), detect::Rect(fixRect.x, fixRect.y, fixRect.width, fixRect.height));
+                values.emplace_back(symbol->get_data(), detect::Rect(crop_roi.x, crop_roi.y, crop_roi.width, crop_roi.height));
             }
         }
 
