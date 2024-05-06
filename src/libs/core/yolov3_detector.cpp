@@ -117,12 +117,20 @@ class Yolov3Detector::Implement {
             scanner.scan(zbar_image);
 
             for (zbar::Image::SymbolIterator symbol = zbar_image.symbol_begin(); symbol != zbar_image.symbol_end(); ++symbol) {
-                values.emplace_back(symbol->get_data(), detect::Rect(crop_roi.x, crop_roi.y, crop_roi.width, crop_roi.height));
+                if (symbol->get_location_size() == 4) {
+                    // 左上、右上、右下、左下
+                    std::vector<cv::Point> points;
+                    for (int i = 0; i < 4; i++) {
+                        points.push_back(cv::Point(symbol->get_location_x(i), symbol->get_location_y(i)));
+                    }
+                    cv::Rect rect = cv::boundingRect(points);
+                    values.emplace_back(symbol->get_data(), detect::Rect(crop_roi.x + rect.x, crop_roi.y + rect.y, rect.width, rect.height));
+                }
             }
         }
 
         auto elapsed = duration_cast<milliseconds>(sw.elapsed());
-        SPDLOG_TRACE("elapsed: {}", elapsed);
+        SPDLOG_TRACE("detect elapsed: {}", elapsed);
 
         return Result(static_cast<uint64_t>(elapsed.count()), std::move(values));
     }
