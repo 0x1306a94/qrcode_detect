@@ -11,17 +11,12 @@
 #include <string>
 #include <vector>
 
+#include <core/detector_type.hpp>
+
 namespace reqparmas {
-enum class DetectorType : int {
-    None = 0,
-    Wechat = 1,
-    YoloV3 = 2,
-    OpenCV = 3,
-    ZBar = 4,
-};
 
 struct DetectRequest {
-    DetectorType type;
+    qrcode::detect::DetectorType type;
     std::vector<std::string> base64;
     std::vector<std::string> url;
 };

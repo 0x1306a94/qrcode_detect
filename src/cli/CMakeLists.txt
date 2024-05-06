@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(qrcode_detect_server CXX)
+project(qrcode_detect_cli CXX)
 
 message(STATUS "Configuration: ${PROJECT_NAME}")
 
@@ -12,13 +12,13 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(argparse)
 
+configure_file(${CMAKE_CURRENT_LIST_DIR}/version.hpp.in autogen/include/${PROJECT_NAME}/version.hpp @ONLY)
+
+
 if(APPLE)
   set(CMAKE_INSTALL_RPATH "@executable_path/../lib")
   set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 endif()
-
-configure_file(${CMAKE_CURRENT_LIST_DIR}/qrcode_detect_server.service.in ${CMAKE_INSTALL_PREFIX}/service/qrcode_detect_server.service @ONLY)
-configure_file(${CMAKE_CURRENT_LIST_DIR}/version.hpp.in autogen/include/${PROJECT_NAME}/version.hpp @ONLY)
 
 find_library(HV_LIB hv_static HINTS "${LIBHV_DIR}/lib" NO_DEFAULT_PATH REQUIRED)
 message(STATUS "HV_LIB: ${HV_LIB}")
@@ -26,27 +26,44 @@ message(STATUS "HV_LIB: ${HV_LIB}")
 find_library(SPDLOG_LIB spdlog HINTS "${SPDLOG_DIR}/lib" NO_DEFAULT_PATH REQUIRED)
 message(STATUS "SPDLOG_LIB: ${SPDLOG_LIB}")
 
+find_package(Eigen3 REQUIRED)
+message(STATUS "Eigen3_LIBS: ${Eigen3_LIBS}")
+
+find_package(Iconv REQUIRED)
+message(STATUS "Iconv_LIBS: ${Iconv_LIBS}")
+set(OpenCV_DIR ${OPENCV_DIR})
+set(OpenCV_STATIC ON)
+set(OpenCV_SHARED OFF)
+find_package(OpenCV REQUIRED 
+    COMPONENTS 
+    opencv_core
+    opencv_imgcodecs 
+    opencv_imgproc
+    opencv_highgui
+    PATHS ${OPENCV_DIR} NO_DEFAULT_PATH)
+message(STATUS "OpenCV_LIBS: ${OpenCV_LIBS}")
+
 if(APPLE)
   set(FILE_GLOB_OPTION RELATIVE)
 endif()
 
 file(GLOB SRC_SRCS ./*.h ./*.hpp ./*.cpp)
-file(GLOB HANDLER_SRCS ./handler/*.hpp ./handler/*.cpp)
 
 source_group(src FILES ${SRC_SRCS})
-source_group(handler FILES ${HANDLER_SRCS})
 
-add_executable(${PROJECT_NAME} ${SRC_SRCS} ${HANDLER_SRCS})
+add_executable(${PROJECT_NAME} ${SRC_SRCS})
 target_include_directories(${PROJECT_NAME} PRIVATE 
 ./
 ../libs
 ${LIBHV_DIR}/include
+${OPENCV_DIR}/include/opencv4
 ${SPDLOG_DIR}/include
 ${CMAKE_CURRENT_BINARY_DIR}/autogen/include)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE 
 ${HV_LIB}
 ${SPDLOG_LIB}
+${OpenCV_LIBS}
 qrcode_detect_core
 argparse
 )
@@ -81,9 +98,9 @@ add_custom_command(TARGET ${PROJECT_NAME}
     POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${OPENCV_SOURCE_DIR}/cmake_build/downloads/wechat_qrcode $<TARGET_FILE_DIR:${PROJECT_NAME}>/models/wechat_qrcode
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${YOLOV3_MODEL_UNZIP_DIR} $<TARGET_FILE_DIR:${PROJECT_NAME}>/models/yolov3-qrcode
-    COMMENT "Copying wechat_qrcode models to binary directory"
-)
+    COMMENT "Copying wechat_qrcode models to binary directory")
 
+    
 install(TARGETS ${PROJECT_NAME}
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib

@@ -8,7 +8,9 @@
 #ifndef detector_factory_hpp
 #define detector_factory_hpp
 
-#include "reqparmas.hpp"
+#include "detector_type.hpp"
+
+#include <string>
 
 namespace context {
 class Context;
@@ -17,7 +19,7 @@ namespace qrcode {
 namespace detect {
 class Detector;
 struct DetectorFactory {
-    Detector *Create(reqparmas::DetectorType type, const context::Context &ctx);
+    Detector *Create(DetectorType type, const std::string &model_dir);
 };
 
 };  // namespace detect

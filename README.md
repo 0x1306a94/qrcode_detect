@@ -37,7 +37,25 @@ cmake --build . --config Release
 cmake --install . --config Release
 
 ```
-* 运行
+### 运行命令行
+```bash
+Usage: qrcode_detect_cli [--help] [--version] --model VAR --type VAR --input VAR [--display]
+
+Optional arguments:
+  -h, --help     shows help message and exits
+  -v, --version  prints version information and exits
+  --model        model file directory. [required]
+  --type         1 wechat 2 yolov3 3 opencv 4 zbar. [nargs=0..1] [default: 1]
+  --input        local file path or remote image link. [required]
+  --display      display rectangular area.
+```
+
+```bash
+qrcode_detect_cli --model ./install/models --input "https://img-blog.csdnimg.cn/07bd565b877e4606a4dd9a97498fd512.jpg?x-oss-process=image/watermark,type_ZHJvaWRzYW5zZmFsbGJhY2s,shadow_50,text_Q1NETiBAWmVyb19fX0NoZW4=,size_12,color_FFFFFF,t_70,g_se,x_16" --type 1 --display
+```
+![](./screenshot/2024-05-06-21.27.58.png)
+
+### 运行服务端
 ```bash
 Usage: qrcode_detect_server [--help] [--version] --port VAR --model VAR [--log VAR] [--daemon] [--pid VAR] [-V] [--verbose]
 

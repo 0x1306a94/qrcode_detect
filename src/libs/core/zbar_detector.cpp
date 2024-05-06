@@ -55,7 +55,7 @@ class ZbarDetector::Implement {
         zbar::Image zimage(width, height, "Y800", raw, width * height);
         int n = scanner.scan(zimage);
         auto elapsed = duration_cast<milliseconds>(sw.elapsed());
-        SPDLOG_TRACE("elapsed: {}", elapsed);
+        SPDLOG_TRACE("detect elapsed: {}", elapsed);
         sw.reset();
 
         std::vector<Value> values;
@@ -121,6 +121,14 @@ std::optional<Result> ZbarDetector::DetectFromBytes(const unsigned char *bytes, 
     }
     std::vector<uchar> data(bytes, bytes + len);
     cv::Mat img = cv::imdecode(data, cv::IMREAD_COLOR);
+    if (img.empty()) {
+        return std::nullopt;
+    }
+    return m_impl->Detect(img);
+}
+
+std::optional<Result> ZbarDetector::DetectFromPath(const std::string &path) {
+    cv::Mat img = cv::imread(path);
     if (img.empty()) {
         return std::nullopt;
     }

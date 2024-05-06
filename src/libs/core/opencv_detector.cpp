@@ -114,5 +114,13 @@ std::optional<Result> OpencvDetector::DetectFromBytes(const unsigned char *bytes
     }
     return m_impl->Detect(img);
 }
+
+std::optional<Result> OpencvDetector::DetectFromPath(const std::string &path) {
+    cv::Mat img = cv::imread(path);
+    if (img.empty()) {
+        return std::nullopt;
+    }
+    return m_impl->Detect(img);
+}
 };  // namespace detect
 };  // namespace qrcode

@@ -24,5 +24,9 @@ std::optional<Result> Detector::DetectFromBuffer(const common::AutoBuffer &buffe
 std::optional<Result> Detector::DetectFromBytes(const unsigned char *bytes, std::size_t len) {
     return std::nullopt;
 }
+
+std::optional<Result> Detector::DetectFromPath(const std::string &path) {
+    return std::nullopt;
+}
 }  // namespace detect
 };  // namespace qrcode

@@ -31,6 +31,7 @@ class Detector {
     virtual std::optional<Result> DetectFromBase64(const std::string &source);
     virtual std::optional<Result> DetectFromBuffer(const common::AutoBuffer &buffer);
     virtual std::optional<Result> DetectFromBytes(const unsigned char *bytes, std::size_t len);
+    virtual std::optional<Result> DetectFromPath(const std::string &path);
 };
 };  // namespace detect
 };  // namespace qrcode

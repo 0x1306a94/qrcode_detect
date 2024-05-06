@@ -18,9 +18,9 @@
 namespace ns {
 void from_json(const nlohmann::json &j, reqparmas::DetectRequest &request) {
     if (j.contains("type")) {
-        request.type = static_cast<reqparmas::DetectorType>(j["type"].get<int>());
+        request.type = static_cast<qrcode::detect::DetectorType>(j["type"].get<int>());
     } else {
-        request.type = reqparmas::DetectorType::Wechat;
+        request.type =  qrcode::detect::DetectorType::Wechat;
     }
 
     if (j.contains("base64") && j["base64"].is_array()) {

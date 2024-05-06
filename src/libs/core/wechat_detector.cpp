@@ -61,7 +61,7 @@ class WechatDetector::Implement {
         std::vector<std::string> contents = detector->detectAndDecode(grayImage, points);
         auto elapsed = duration_cast<milliseconds>(sw.elapsed());
         sw.reset();
-        SPDLOG_TRACE("elapsed: {}", elapsed);
+        SPDLOG_TRACE("detect elapsed: {}", elapsed);
         Result result(static_cast<uint64_t>(elapsed.count()));
         std::vector<Value> values;
         for (int i = 0; i < points.size(); i++) {
@@ -98,19 +98,6 @@ std::optional<Result> WechatDetector::DetectFromBase64(const std::string &source
         return std::nullopt;
     }
 
-    //    int threshold = 750;
-    //    int originalWidth = img.cols;
-    //    int originalHeight = img.rows;
-    //    if (originalWidth >= threshold || originalHeight >= threshold) {
-    //        double widthScale = threshold * 1.0 / originalWidth;
-    //        double heightScale = threshold * 1.0 / originalHeight;
-    //
-    //        double scale = std::min(widthScale, heightScale);
-    //        cv::Mat dstImg;
-    //        cv::Size dstSize(scale * originalWidth, scale * originalHeight);
-    //        cv::resize(img, dstImg, dstSize);
-    //        return m_impl->Detect(dstImg);
-    //    }
     return m_impl->Detect(img);
 }
 
@@ -124,19 +111,6 @@ std::optional<Result> WechatDetector::DetectFromBuffer(const common::AutoBuffer 
         return std::nullopt;
     }
 
-    //    int threshold = 750;
-    //    int originalWidth = img.cols;
-    //    int originalHeight = img.rows;
-    //    if (originalWidth >= threshold || originalHeight >= threshold) {
-    //        double widthScale = threshold * 1.0 / originalWidth;
-    //        double heightScale = threshold * 1.0 / originalHeight;
-    //
-    //        double scale = std::min(widthScale, heightScale);
-    //        cv::Mat dstImg;
-    //        cv::Size dstSize(scale * originalWidth, scale * originalHeight);
-    //        cv::resize(img, dstImg, dstSize);
-    //        return m_impl->Detect(dstImg);
-    //    }
     return m_impl->Detect(img);
 }
 
@@ -150,19 +124,14 @@ std::optional<Result> WechatDetector::DetectFromBytes(const unsigned char *bytes
         return std::nullopt;
     }
 
-    //    int threshold = 750;
-    //    int originalWidth = img.cols;
-    //    int originalHeight = img.rows;
-    //    if (originalWidth >= threshold || originalHeight >= threshold) {
-    //        double widthScale = threshold * 1.0 / originalWidth;
-    //        double heightScale = threshold * 1.0 / originalHeight;
-    //
-    //        double scale = std::min(widthScale, heightScale);
-    //        cv::Mat dstImg;
-    //        cv::Size dstSize(scale * originalWidth, scale * originalHeight);
-    //        cv::resize(img, dstImg, dstSize);
-    //        return m_impl->Detect(dstImg);
-    //    }
+    return m_impl->Detect(img);
+}
+
+std::optional<Result> WechatDetector::DetectFromPath(const std::string &path) {
+    cv::Mat img = cv::imread(path);
+    if (img.empty()) {
+        return std::nullopt;
+    }
     return m_impl->Detect(img);
 }
 
