@@ -49,15 +49,16 @@ class OpencvDetector::Implement {
         cv::cvtColor(image, grayImage, cv::COLOR_BGR2GRAY);
 
         // 左上、右上、右下、左下
-        std::vector<cv::Point> points;
-        std::string data = detector->detectAndDecode(grayImage, points);
+        cv::Mat points;
+        std::vector<std::string> contents;
+        detector->detectAndDecodeMulti(grayImage, contents, points);
         auto elapsed = duration_cast<milliseconds>(sw.elapsed());
-        SPDLOG_TRACE("elapsed: {}", elapsed);
+        SPDLOG_TRACE("detect elapsed: {}", elapsed);
         sw.reset();
         std::vector<Value> values;
-        if (!points.empty()) {
-            cv::Rect rect = cv::boundingRect(points);
-            values.emplace_back(data, detect::Rect(rect.x, rect.y, rect.width, rect.height));
+        for (int idx = 0; idx < points.rows; idx++) {
+            cv::Rect rect = cv::boundingRect(points.row(idx));
+            values.emplace_back(contents[idx], detect::Rect(rect.x, rect.y, rect.width, rect.height));
         }
         return Result(static_cast<uint64_t>(elapsed.count()), std::move(values));
     }
