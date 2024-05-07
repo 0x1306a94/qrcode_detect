@@ -5,14 +5,14 @@ set -e
 CUR_DIR=$PWD
 
 DEB_VERSION="1.0.0"
-DEB_NAME="qrcode_detect_server-${DEB_VERSION}-amd64.deb"
+DEB_NAME="qrcode-detect-${DEB_VERSION}-amd64.deb"
 
 GIT_ROOT_DIR=$(realpath $(dirname $(dirname $0)))
 BUILD_WORK_DIR=$GIT_ROOT_DIR/build_deb_work
 CMAKE_BUILD_DIR=$BUILD_WORK_DIR/cmake_build
 CMAKE_INSTALL_DIR=$BUILD_WORK_DIR/cmake_install
 DEB_WORK_DIR=$BUILD_WORK_DIR/deb_work
-DEB_BIN_DIR=$DEB_WORK_DIR/opt/qrcode_detect_server
+DEB_BIN_DIR=$DEB_WORK_DIR/opt/qrcode_detect
 
 if [ ! -d "${BUILD_WORK_DIR}" ]; then
     mkdir -p $BUILD_WORK_DIR

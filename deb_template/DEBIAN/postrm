@@ -15,10 +15,15 @@ remove)
 
   if [ -L /usr/local/bin/qrcode_detect_server ]; then
     rm -rf /usr/local/bin/qrcode_detect_server
-    echo "Removed /usr/local/bin/qrcode_detect_server"
+    echo "[*] Removed /usr/local/bin/qrcode_detect_server"
   fi
 
-  echo "Removed /opt/qrcode_detect_server"
+  if [ -L /usr/local/bin/qrcode_detect_cli ]; then
+    rm -rf /usr/local/bin/qrcode_detect_cli
+    echo "[*] Removed /usr/local/bin/qrcode_detect_cli"
+  fi
+
+  echo "[*] Removed /opt/qrcode_detect"
   ;;
 
 upgrade | deconfigure)
