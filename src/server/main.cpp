@@ -140,7 +140,7 @@ void signal_exit_handler(int sig) {
 
 int main(int argc, char *argv[]) {
     std::stringstream ss;
-    ss << "qrcode_detect_server " << QRCODE_DETECT_SERVER_VERSION << " " << QRCODE_DETECT_SERVER_GIT_BRANCH << " " << QRCODE_DETECT_SERVER_GIT_HASH;
+    ss << "qrcode_detect_server: " << QRCODE_DETECT_SERVER_VERSION << " " << QRCODE_DETECT_SERVER_GIT_BRANCH << " " << QRCODE_DETECT_SERVER_GIT_HASH;
     argparse::ArgumentParser program("qrcode_detect_server", ss.str(), argparse::default_arguments::all);
     program.add_argument("-p", "--port")
         .required()
