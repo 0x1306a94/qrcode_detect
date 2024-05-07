@@ -123,7 +123,7 @@ void dispaly_result(const qrcode::detect::Result &result, const cv::Mat &source_
 void print_result(const qrcode::detect::Result &result) {
     hv::Json json;
     ns::to_json(json, result);
-    std::cout << json << std::endl;
+    std::cout << json.dump(4) << std::endl;
 }
 
 int main(int argc, char *argv[]) {
