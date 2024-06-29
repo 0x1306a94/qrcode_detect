@@ -5,7 +5,7 @@
 //  Created by king on 2024/3/29.
 //
 
-#include "AutoBuffer.hpp"
+#include <qrcode_detect/core/AutoBuffer.hpp>
 
 namespace qrcode {
 namespace common {

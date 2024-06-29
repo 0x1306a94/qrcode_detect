@@ -8,8 +8,9 @@ CUR_DIR=$PWD
 
 GIT_ROOT_DIR=$(realpath $(dirname $(dirname $0)))
 DEPS_DIR=$GIT_ROOT_DIR/download_deps
-LIBHV_DIR=$DEPS_DIR/libhv
-LIBHV_INSTALL_DIR=$GIT_ROOT_DIR/build_3rdparty/libhv
+LIBHV_VERSION="v1.3.2"
+LIBHV_DIR=$DEPS_DIR/libhv_$LIBHV_VERSION
+LIBHV_INSTALL_DIR=$GIT_ROOT_DIR/build_3rdparty/libhv_$LIBHV_VERSION
 LIBHV_BUILD_DIR=$LIBHV_DIR/cmake_build
 
 if [[ -d "$LIBHV_BUILD_DIR" ]]; then

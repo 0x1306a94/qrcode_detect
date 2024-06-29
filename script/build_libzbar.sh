@@ -6,8 +6,9 @@ CUR_DIR=$PWD
 
 GIT_ROOT_DIR=$(realpath $(dirname $(dirname $0)))
 DEPS_DIR=$GIT_ROOT_DIR/download_deps
-ZBAR_DIR=$DEPS_DIR/libzbar
-ZBAR_INSTALL_DIR=$GIT_ROOT_DIR/build_3rdparty/zbar
+LIBZBAR_VERSION="0.23.93"
+ZBAR_DIR=$DEPS_DIR/libzbar_$LIBZBAR_VERSION
+ZBAR_INSTALL_DIR=$GIT_ROOT_DIR/build_3rdparty/libzbar_$LIBZBAR_VERSION
 
 if [[ -d "$ZBAR_INSTALL_DIR" ]]; then
     rm -rf $ZBAR_INSTALL_DIR

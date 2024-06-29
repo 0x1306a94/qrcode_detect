@@ -8,7 +8,7 @@
 #ifndef wechat_detector_hpp
 #define wechat_detector_hpp
 
-#include "detector.hpp"
+#include <qrcode_detect/core/detector.hpp>
 
 #include <memory>
 

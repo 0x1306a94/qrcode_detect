@@ -4,6 +4,7 @@ project(qrcode_detect_core CXX)
 
 message(STATUS "Configuration: ${PROJECT_NAME}")
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 set(YOLOV3_MODEL_DOWNLOAD_DIR ${CMAKE_BINARY_DIR}/download)
 set(YOLOV3_MODEL_UNZIP_DIR ${CMAKE_BINARY_DIR}/download/yolov3-qrcode)
@@ -21,10 +22,14 @@ if(APPLE)
   set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 endif()
 
-find_library(SPDLOG_LIB spdlog HINTS "${SPDLOG_DIR}/lib" NO_DEFAULT_PATH REQUIRED)
-message(STATUS "SPDLOG_LIB: ${SPDLOG_LIB}")
+configure_file(
+  version.hpp.in
+  ${CONFIGURE_AUTO_HEADER_ROOT_DIR}/${INSTALL_PUBLIC_INCLUDE_ROOT}/core/version.hpp
+  @ONLY)
 
-find_library(ZBAR_LIBS libzbar.a HINTS "${ZBAR_LIB_DIR}/lib" NO_DEFAULT_PATH REQUIRED)
+find_package(spdlog REQUIRED PATHS ${SPDLOG_DIR} NO_DEFAULT_PATH)
+
+find_library(ZBAR_LIBS zbar HINTS "${LIBZBAR_DIR}/lib" "${LIBZBAR_DIR}/lib64" PATH_SUFFIXES "a" NO_DEFAULT_PATH REQUIRED)
 message(STATUS "ZBAR_LIBS: ${ZBAR_LIBS}")
 
 find_package(Eigen3 REQUIRED)
@@ -48,25 +53,42 @@ find_package(OpenCV REQUIRED
     PATHS ${OPENCV_DIR} NO_DEFAULT_PATH)
 message(STATUS "OpenCV_LIBS: ${OpenCV_LIBS}")
 
-if(APPLE)
-  set(FILE_GLOB_OPTION RELATIVE)
-endif()
-
 file(GLOB SRC_SRCS ./*.h ./*.hpp ./*.cpp)
-
 source_group(src FILES ${SRC_SRCS})
 
-add_library(${PROJECT_NAME} STATIC ${SRC_SRCS})
+file(
+  GLOB LIB_PUBLIC_HEADERS ${FILE_GLOB_OPTION}
+  ${WORKSPACE_PUBLIC_INCLUDE_ROOT}/${INSTALL_PUBLIC_INCLUDE_ROOT}/core/*.h
+  ${WORKSPACE_PUBLIC_INCLUDE_ROOT}/${INSTALL_PUBLIC_INCLUDE_ROOT}/core/*.hpp)
+list(
+  APPEND
+  LIB_PUBLIC_HEADERS
+  ${CONFIGURE_AUTO_HEADER_ROOT_DIR}/${INSTALL_PUBLIC_INCLUDE_ROOT}/core/version.hpp
+)
+
+source_group("Public Header Files" FILES ${LIB_PUBLIC_HEADERS})
+message(STATUS "LIB_PUBLIC_HEADERS: ${LIB_PUBLIC_HEADERS}")
+
+add_library(${PROJECT_NAME} SHARED ${SRC_SRCS} ${LIB_PUBLIC_HEADERS})
 target_include_directories(${PROJECT_NAME} PRIVATE 
 ./
 ${SPDLOG_DIR}/include
 ${OPENCV_DIR}/include/opencv4
-${ZBAR_LIB_DIR}/include)
+${LIBZBAR_DIR}/include)
+
+set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "${LIB_PUBLIC_HEADERS}")
 
 target_link_libraries(${PROJECT_NAME} PUBLIC 
-${SPDLOG_LIB}
-${OpenCV_LIBS}
-${ZBAR_LIBS}
+  spdlog::spdlog
+  ${OpenCV_LIBS}
+  ${ZBAR_LIBS}
+)
+
+set_target_properties(
+  ${PROJECT_NAME}
+  PROPERTIES PUBLIC_HEADER "${LIB_PUBLIC_HEADERS}"
+             VERSION "${QRCODE_DETECT_VERSION}" # 库的版本号
+             SOVERSION "${QRCODE_DETECT_API_VERSION}" # 库的API版本号
 )
 
 if(APPLE)
@@ -80,17 +102,42 @@ elseif(UNIX)
   target_link_libraries(${PROJECT_NAME} PUBLIC ${CMAKE_DL_LIBS})
 endif()
 
-if(NOT BUILD_DEB_PACKAGE)
-  install(TARGETS ${PROJECT_NAME}
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
-    RUNTIME DESTINATION bin
-    BUNDLE DESTINATION bin
-  )
-endif()
+
+install(TARGETS ${PROJECT_NAME}
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
+  RUNTIME DESTINATION bin
+  BUNDLE DESTINATION bin
+  PUBLIC_HEADER DESTINATION include/${INSTALL_PUBLIC_INCLUDE_ROOT}/core
+)
 
 install(DIRECTORY
   ${OPENCV_SOURCE_DIR}/cmake_build/downloads/wechat_qrcode
   ${YOLOV3_MODEL_UNZIP_DIR}
   DESTINATION models
 )
+
+
+if(EXISTS "${SPDLOG_DIR}/lib64")
+  file(GLOB SPDLOG_LIB_FILES "${SPDLOG_DIR}/lib64/lib*.dylib" "${SPDLOG_DIR}/lib64/lib*.so" "${SPDLOG_DIR}/lib64/lib*.so.*")
+else()
+  file(GLOB SPDLOG_LIB_FILES "${SPDLOG_DIR}/lib/lib*.dylib" "${SPDLOG_DIR}/lib/lib*.so" "${SPDLOG_DIR}/lib/lib*.so.*")
+endif()
+message(STATUS "SPDLOG_LIB_FILES: ${SPDLOG_LIB_FILES}")
+install(FILES ${SPDLOG_LIB_FILES} DESTINATION lib)
+
+if(EXISTS "${OPENCV_DIR}/lib64")
+  file(GLOB OPENCV_LIB_FILES "${OPENCV_DIR}/lib64/lib*.dylib" "${OPENCV_DIR}/lib64/lib*.so" "${OPENCV_DIR}/lib64/lib*.so.*")
+else()
+  file(GLOB OPENCV_LIB_FILES "${OPENCV_DIR}/lib/lib*.dylib" "${OPENCV_DIR}/lib/lib*.so" "${OPENCV_DIR}/lib/lib*.so.*")
+endif()
+message(STATUS "OPENCV_LIB_FILES: ${OPENCV_LIB_FILES}")
+install(FILES ${OPENCV_LIB_FILES} DESTINATION lib)
+
+if(EXISTS "${LIBZBAR_DIR}/lib64")
+  file(GLOB ZBAR_LIB_FILES "${LIBZBAR_DIR}/lib64/lib*.dylib" "${LIBZBAR_DIR}/lib/lib*.so" "${LIBZBAR_DIR}/lib/lib*.so.*")
+else()
+  file(GLOB ZBAR_LIB_FILES "${LIBZBAR_DIR}/lib/lib*.dylib" "${LIBZBAR_DIR}/lib/lib*.so" "${LIBZBAR_DIR}/lib/lib*.so.*")
+endif()
+message(STATUS "ZBAR_LIB_FILES: ${ZBAR_LIB_FILES}")
+install(FILES ${ZBAR_LIB_FILES} DESTINATION lib)

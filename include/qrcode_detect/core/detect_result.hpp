@@ -5,8 +5,8 @@
 //  Created by king on 2024/3/30.
 //
 
-#ifndef detect_result_hpp
-#define detect_result_hpp
+#ifndef __qrcode_detect_detect_result_hpp
+#define __qrcode_detect_detect_result_hpp
 
 #include <cstdint>
 #include <string>
@@ -40,4 +40,4 @@ struct Result {
 };  // namespace detect
 };  // namespace qrcode
 
-#endif /* detect_result_hpp */
+#endif /* __qrcode_detect_detect_result_hpp */

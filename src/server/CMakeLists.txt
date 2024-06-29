@@ -4,13 +4,7 @@ project(qrcode_detect_server CXX)
 
 message(STATUS "Configuration: ${PROJECT_NAME}")
 
-include(FetchContent)
-FetchContent_Declare(
-    argparse
-    GIT_REPOSITORY https://github.com/p-ranav/argparse.git
-    GIT_TAG v3.0
-)
-FetchContent_MakeAvailable(argparse)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 if(APPLE)
   set(CMAKE_INSTALL_RPATH "@executable_path/../lib")
@@ -18,17 +12,14 @@ if(APPLE)
 endif()
 
 configure_file(${CMAKE_CURRENT_LIST_DIR}/qrcode_detect_server.service.in ${CMAKE_INSTALL_PREFIX}/service/qrcode_detect_server.service @ONLY)
-configure_file(${CMAKE_CURRENT_LIST_DIR}/version.hpp.in autogen/include/${PROJECT_NAME}/version.hpp @ONLY)
 
 find_library(HV_LIB hv_static HINTS "${LIBHV_DIR}/lib" NO_DEFAULT_PATH REQUIRED)
 message(STATUS "HV_LIB: ${HV_LIB}")
 
+find_package(argparse REQUIRED PATHS ${ARGPARSE_DIR} NO_DEFAULT_PATH)
+
 find_library(SPDLOG_LIB spdlog HINTS "${SPDLOG_DIR}/lib" NO_DEFAULT_PATH REQUIRED)
 message(STATUS "SPDLOG_LIB: ${SPDLOG_LIB}")
-
-if(APPLE)
-  set(FILE_GLOB_OPTION RELATIVE)
-endif()
 
 file(GLOB SRC_SRCS ./*.h ./*.hpp ./*.cpp)
 file(GLOB HANDLER_SRCS ./handler/*.hpp ./handler/*.cpp)
@@ -41,14 +32,13 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 ./
 ../libs
 ${LIBHV_DIR}/include
-${SPDLOG_DIR}/include
-${CMAKE_CURRENT_BINARY_DIR}/autogen/include)
+${SPDLOG_DIR}/include)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE 
 ${HV_LIB}
 ${SPDLOG_LIB}
 qrcode_detect_core
-argparse
+argparse::argparse
 )
 
 # libhv ssl
@@ -90,3 +80,10 @@ install(TARGETS ${PROJECT_NAME}
   RUNTIME DESTINATION bin
   BUNDLE DESTINATION bin
 )
+
+if(EXISTS "${OPENCV_DIR}/lib64")
+  file(GLOB OPENCV_LIB_FILES "${OPENCV_DIR}/lib64/lib*")
+else()
+  file(GLOB OPENCV_LIB_FILES "${OPENCV_DIR}/lib/lib*")
+endif()
+install(FILES ${OPENCV_LIB_FILES} DESTINATION lib)

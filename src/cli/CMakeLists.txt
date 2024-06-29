@@ -4,27 +4,17 @@ project(qrcode_detect_cli CXX)
 
 message(STATUS "Configuration: ${PROJECT_NAME}")
 
-include(FetchContent)
-FetchContent_Declare(
-    argparse
-    GIT_REPOSITORY https://github.com/p-ranav/argparse.git
-    GIT_TAG v3.0
-)
-FetchContent_MakeAvailable(argparse)
-
-configure_file(${CMAKE_CURRENT_LIST_DIR}/version.hpp.in autogen/include/${PROJECT_NAME}/version.hpp @ONLY)
-
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 if(APPLE)
   set(CMAKE_INSTALL_RPATH "@executable_path/../lib")
-  set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 endif()
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
+find_package(argparse REQUIRED PATHS ${ARGPARSE_DIR} NO_DEFAULT_PATH)
 
 find_library(HV_LIB hv_static HINTS "${LIBHV_DIR}/lib" NO_DEFAULT_PATH REQUIRED)
 message(STATUS "HV_LIB: ${HV_LIB}")
-
-find_library(SPDLOG_LIB spdlog HINTS "${SPDLOG_DIR}/lib" NO_DEFAULT_PATH REQUIRED)
-message(STATUS "SPDLOG_LIB: ${SPDLOG_LIB}")
 
 find_package(Eigen3 REQUIRED)
 message(STATUS "Eigen3_LIBS: ${Eigen3_LIBS}")
@@ -43,10 +33,6 @@ find_package(OpenCV REQUIRED
     PATHS ${OPENCV_DIR} NO_DEFAULT_PATH)
 message(STATUS "OpenCV_LIBS: ${OpenCV_LIBS}")
 
-if(APPLE)
-  set(FILE_GLOB_OPTION RELATIVE)
-endif()
-
 file(GLOB SRC_SRCS ./*.h ./*.hpp ./*.cpp)
 
 source_group(src FILES ${SRC_SRCS})
@@ -57,15 +43,13 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 ../libs
 ${LIBHV_DIR}/include
 ${OPENCV_DIR}/include/opencv4
-${SPDLOG_DIR}/include
-${CMAKE_CURRENT_BINARY_DIR}/autogen/include)
+${SPDLOG_DIR}/include)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE 
 ${HV_LIB}
-${SPDLOG_LIB}
 ${OpenCV_LIBS}
 qrcode_detect_core
-argparse
+argparse::argparse
 )
 
 # libhv ssl

@@ -6,17 +6,17 @@ CUR_DIR=$PWD
 
 GIT_ROOT_DIR=$(realpath $(dirname $(dirname $0)))
 DEPS_DIR=$GIT_ROOT_DIR/download_deps
-LIBZBAR_VERSION="0.23.93"
-LIBZBAR_DIR=$DEPS_DIR/libzbar_$LIBZBAR_VERSION
+ARGPARSE_VERSION="v3.0"
+ARGPARSE_DIR=$DEPS_DIR/argparse_$ARGPARSE_VERSION
 
 if [[ ! -d "${DEPS_DIR}" ]]; then
     mkdir $DEPS_DIR
 fi
 
-rm -rf $LIBZBAR_DIR
+rm -rf $ARGPARSE_DIR
 
 echo "GIT_ROOT_DIR: ${GIT_ROOT_DIR}"
 
-git clone --single-branch --depth 1 -b $LIBZBAR_VERSION https://github.com/mchehab/zbar.git $LIBZBAR_DIR
+git clone --single-branch --depth 1 -b $ARGPARSE_VERSION https://github.com/p-ranav/argparse $ARGPARSE_DIR
 
 cd $CUR_DIR

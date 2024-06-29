@@ -8,7 +8,7 @@
 #ifndef yolov3_detector_hpp
 #define yolov3_detector_hpp
 
-#include "detector.hpp"
+#include <qrcode_detect/core/detector.hpp>
 
 #include <memory>
 

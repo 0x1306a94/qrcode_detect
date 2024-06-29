@@ -5,8 +5,8 @@
 //  Created by king on 2024/5/6.
 //
 
-#ifndef detector_type_hpp
-#define detector_type_hpp
+#ifndef __qrcode_detect_detector_type_hpp
+#define __qrcode_detect_detector_type_hpp
 
 namespace qrcode {
 namespace detect {
@@ -20,4 +20,4 @@ enum class DetectorType : int {
 };
 };  // namespace qrcode
 
-#endif /* detector_type_hpp */
+#endif /* __qrcode_detect_detector_type_hpp */

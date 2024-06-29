@@ -25,10 +25,10 @@
 
 #include "../server_context.hpp"
 
-#include <core/AutoBuffer.hpp>
-#include <core/detect_result.hpp>
-#include <core/detector.hpp>
-#include <core/detector_factory.hpp>
+#include <qrcode_detect/core/AutoBuffer.hpp>
+#include <qrcode_detect/core/detect_result.hpp>
+#include <qrcode_detect/core/detector.hpp>
+#include <qrcode_detect/core/detector_factory.hpp>
 
 using std::chrono::duration_cast;
 using std::chrono::milliseconds;

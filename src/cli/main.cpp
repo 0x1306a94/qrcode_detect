@@ -17,13 +17,12 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 
-#include <qrcode_detect_cli/version.hpp>
-
-#include <core/AutoBuffer.hpp>
-#include <core/detect_result.hpp>
-#include <core/detector.hpp>
-#include <core/detector_factory.hpp>
-#include <core/detector_type.hpp>
+#include <qrcode_detect/core/AutoBuffer.hpp>
+#include <qrcode_detect/core/detect_result.hpp>
+#include <qrcode_detect/core/detector.hpp>
+#include <qrcode_detect/core/detector_factory.hpp>
+#include <qrcode_detect/core/detector_type.hpp>
+#include <qrcode_detect/core/version.hpp>
 
 namespace ns {
 
@@ -126,12 +125,17 @@ void print_result(const qrcode::detect::Result &result) {
     std::cout << json.dump(4) << std::endl;
 }
 
+static int LOG_verbosity = SPDLOG_LEVEL_OFF;
+
 int main(int argc, char *argv[]) {
 
-    spdlog::set_level(spdlog::level::off);
-
     std::stringstream ss;
-    ss << "qrcode_detect_cli: " << QRCODE_DETECT_CLI_VERSION << " " << QRCODE_DETECT_CLI_GIT_BRANCH << " " << QRCODE_DETECT_CLI_GIT_HASH;
+    ss << "version: " << QRCODE_DETECT_VERSION_FULL << "\n"
+       << "build_date: " << QRCODE_DETECT_BUILD_TIMESTAMP << "\n"
+       << "git_url: " << QRCODE_DETECT_GIT_URL << "\n"
+       << "git_branch: " << QRCODE_DETECT_GIT_BRANCH << "\n"
+       << "git_hash: " << QRCODE_DETECT_GIT_HASH;
+
     argparse::ArgumentParser program("qrcode_detect_cli", ss.str(), argparse::default_arguments::all, true, std::cerr);
 
     program.add_argument("--model")
@@ -153,12 +157,32 @@ int main(int argc, char *argv[]) {
         .implicit_value(true)
         .help("display rectangular area.");
 
+    auto &group = program.add_mutually_exclusive_group();
+    group.add_argument("-V")
+        .action([&](const auto &) { --LOG_verbosity; })
+        .append()
+        .implicit_value(true)
+        .nargs(0)
+        .help("Set log level to critical, err, warn, info, debug, trace.");
+
+    group.add_argument("--verbose")
+        .action([&](const auto &) { LOG_verbosity = SPDLOG_LEVEL_TRACE; })
+        .default_value(false)
+        .implicit_value(true)
+        .help("Set log level to trace.");
+
     try {
         program.parse_args(argc, argv);
     } catch (const std::exception &err) {
         std::cerr << err.what() << std::endl;
         std::cerr << program;
         return EXIT_FAILURE;
+    }
+
+    if (LOG_verbosity < 0) {
+        spdlog::set_level(spdlog::level::off);
+    } else {
+        spdlog::set_level(static_cast<spdlog::level::level_enum>(LOG_verbosity));
     }
 
     int argType = program.get<int>("--type");

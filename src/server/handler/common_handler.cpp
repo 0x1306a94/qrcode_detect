@@ -12,21 +12,21 @@
 namespace handler {
 int SendSuccess(const HttpContextPtr &ctx) {
     nlohmann::json json;
-    json["code"] = 0;
+    json["state"] = 0;
     json["result"] = true;
     return ctx->send(json.dump());
 }
 
 int SendSuccess(const HttpContextPtr &ctx, nlohmann::json result) {
     nlohmann::json json;
-    json["code"] = 0;
+    json["state"] = 0;
     json["result"] = result;
     return ctx->send(json.dump());
 }
 
 int SendFail(const HttpContextPtr &ctx, long code, const std::string &msg) {
     nlohmann::json json;
-    json["code"] = code;
+    json["state"] = code;
     json["msg"] = msg;
     return ctx->send(json.dump());
 }

@@ -5,10 +5,10 @@
 //  Created by king on 2024/3/30.
 //
 
-#include "detector.hpp"
+#include <qrcode_detect/core/detector.hpp>
 
-#include "AutoBuffer.hpp"
-#include "detect_result.hpp"
+#include <qrcode_detect/core/AutoBuffer.hpp>
+#include <qrcode_detect/core/detect_result.hpp>
 
 namespace qrcode {
 namespace detect {

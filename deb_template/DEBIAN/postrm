@@ -7,6 +7,12 @@ purge)
 
 remove)
 
+  if [ -L /etc/ld.so.conf.d/qrcode_detect.conf ]; then
+    rm -rf /etc/ld.so.conf.d/qrcode_detect.conf
+    echo "[*] Removed /etc/ld.so.conf.d/qrcode_detect.conf"
+    ldconfig
+  fi
+
   if [ -L /lib/systemd/system/qrcode_detect_server.service ]; then
     service qrcode_detect_server stop
     systemctl disable qrcode_detect_server

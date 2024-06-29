@@ -5,7 +5,7 @@
 //  Created by king on 2024/5/2.
 //
 
-#include "detector_factory.hpp"
+#include <qrcode_detect/core/detector_factory.hpp>
 
 #include "opencv_detector.hpp"
 #include "wechat_detector.hpp"

@@ -19,7 +19,7 @@
 #include "router.hpp"
 #include "server_context.hpp"
 
-#include <qrcode_detect_server/version.hpp>
+#include <qrcode_detect/core/version.hpp>
 
 #include <argparse/argparse.hpp>
 #include <filesystem>
@@ -140,7 +140,12 @@ void signal_exit_handler(int sig) {
 
 int main(int argc, char *argv[]) {
     std::stringstream ss;
-    ss << "qrcode_detect_server: " << QRCODE_DETECT_SERVER_VERSION << " " << QRCODE_DETECT_SERVER_GIT_BRANCH << " " << QRCODE_DETECT_SERVER_GIT_HASH;
+    ss << "version: " << QRCODE_DETECT_VERSION_FULL << "\n"
+       << "build_date: " << QRCODE_DETECT_BUILD_TIMESTAMP << "\n"
+       << "git_url: " << QRCODE_DETECT_GIT_URL << "\n"
+       << "git_branch: " << QRCODE_DETECT_GIT_BRANCH << "\n"
+       << "git_hash: " << QRCODE_DETECT_GIT_HASH;
+
     argparse::ArgumentParser program("qrcode_detect_server", ss.str(), argparse::default_arguments::all);
     program.add_argument("-p", "--port")
         .required()

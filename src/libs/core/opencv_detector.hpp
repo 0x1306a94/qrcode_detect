@@ -8,7 +8,7 @@
 #ifndef opencv_detector_hpp
 #define opencv_detector_hpp
 
-#include "detector.hpp"
+#include <qrcode_detect/core/detector.hpp>
 
 #include <memory>
 

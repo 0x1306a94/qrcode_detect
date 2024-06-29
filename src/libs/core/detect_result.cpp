@@ -5,7 +5,7 @@
 //  Created by king on 2024/3/30.
 //
 
-#include "detect_result.hpp"
+#include <qrcode_detect/core/detect_result.hpp>
 
 namespace qrcode {
 namespace detect {

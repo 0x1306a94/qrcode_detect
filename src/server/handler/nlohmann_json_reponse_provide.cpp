@@ -9,7 +9,7 @@
 
 #include "../reqparmas.hpp"
 
-#include <core/detect_result.hpp>
+#include <qrcode_detect/core/detect_result.hpp>
 
 #ifndef SPDLOG_ACTIVE_LEVEL
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
@@ -20,7 +20,7 @@ void from_json(const nlohmann::json &j, reqparmas::DetectRequest &request) {
     if (j.contains("type")) {
         request.type = static_cast<qrcode::detect::DetectorType>(j["type"].get<int>());
     } else {
-        request.type =  qrcode::detect::DetectorType::Wechat;
+        request.type = qrcode::detect::DetectorType::Wechat;
     }
 
     if (j.contains("base64") && j["base64"].is_array()) {

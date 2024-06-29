@@ -7,9 +7,10 @@
 
 #include "wechat_detector.hpp"
 
-#include "AutoBuffer.hpp"
 #include "base64.hpp"
-#include "detect_result.hpp"
+
+#include <qrcode_detect/core/AutoBuffer.hpp>
+#include <qrcode_detect/core/detect_result.hpp>
 
 #ifndef SPDLOG_ACTIVE_LEVEL
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE

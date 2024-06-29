@@ -5,8 +5,8 @@
 //  Created by king on 2024/5/2.
 //
 
-#ifndef detector_factory_hpp
-#define detector_factory_hpp
+#ifndef __qrcode_detect_detector_factory_hpp
+#define __qrcode_detect_detector_factory_hpp
 
 #include "detector_type.hpp"
 
@@ -25,4 +25,4 @@ struct DetectorFactory {
 };  // namespace detect
 };  // namespace qrcode
 
-#endif /* detector_factory_hpp */
+#endif /* __qrcode_detect_detector_factory_hpp */

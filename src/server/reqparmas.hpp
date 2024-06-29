@@ -11,7 +11,7 @@
 #include <string>
 #include <vector>
 
-#include <core/detector_type.hpp>
+#include <qrcode_detect/core/detector_type.hpp>
 
 namespace reqparmas {
 

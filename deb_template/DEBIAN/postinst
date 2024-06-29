@@ -8,6 +8,12 @@ case "$1" in
 configure)
 
   echo "[*] Installed /opt/qrcode_detect"
+  if [ ! -L /etc/ld.so.conf.d/qrcode_detect.conf ]; then
+    ln -s /opt/qrcode_detect/config/qrcode_detect.conf /etc/ld.so.conf.d/qrcode_detect.conf
+    echo "Installed /etc/ld.so.conf.d/qrcode_detect.conf"
+    ldconfig
+  fi
+
   if [ ! -L /lib/systemd/system/qrcode_detect_server.service ]; then
     ln -s /opt/qrcode_detect/service/qrcode_detect_server.service /lib/systemd/system/qrcode_detect_server.service
     systemctl enable qrcode_detect_server

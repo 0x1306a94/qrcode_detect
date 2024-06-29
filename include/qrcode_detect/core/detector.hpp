@@ -5,8 +5,8 @@
 //  Created by king on 2024/3/30.
 //
 
-#ifndef detector_hpp
-#define detector_hpp
+#ifndef __qrcode_detect_detector_hpp
+#define __qrcode_detect_detector_hpp
 
 #include <optional>
 #include <string>
@@ -36,4 +36,4 @@ class Detector {
 };  // namespace detect
 };  // namespace qrcode
 
-#endif /* detector_hpp */
+#endif /* __qrcode_detect_detector_hpp */

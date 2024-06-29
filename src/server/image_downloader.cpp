@@ -7,7 +7,7 @@
 
 #include "image_downloader.hpp"
 
-#include "core/AutoBuffer.hpp"
+#include <qrcode_detect/core/AutoBuffer.hpp>
 
 #include <hv/requests.h>
 

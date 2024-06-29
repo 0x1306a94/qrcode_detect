@@ -44,6 +44,9 @@ mkdir -p $DEB_BIN_DIR
 cp -rf $GIT_ROOT_DIR/deb_template/* $DEB_WORK_DIR
 cp -rf $CMAKE_INSTALL_DIR/* $DEB_BIN_DIR
 
+mkdir -p $DEB_BIN_DIR/config
+echo "/opt/qrcode_detect/lib" > $DEB_BIN_DIR/config/qrcode_detect.conf
+
 INSTALLED_SIZE=$(du -ks $DEB_BIN_DIR | cut -f 1)
 sed -i "s/\${Version}/${DEB_VERSION}/g" $DEB_WORK_DIR/DEBIAN/control
 sed -i "s/\${Installed-Size}/${INSTALLED_SIZE}/g" $DEB_WORK_DIR/DEBIAN/control

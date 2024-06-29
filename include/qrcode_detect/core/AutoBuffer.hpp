@@ -5,8 +5,8 @@
 //  Created by king on 2024/3/29.
 //
 
-#ifndef AutoBuffer_hpp
-#define AutoBuffer_hpp
+#ifndef __qrcode_detect_AutoBuffer_hpp
+#define __qrcode_detect_AutoBuffer_hpp
 
 #include <iostream>
 #include <stdio.h>
@@ -49,4 +49,4 @@ class AutoBuffer {
 };  // namespace common
 };  // namespace qrcode
 
-#endif /* AutoBuffer_hpp */
+#endif /* __qrcode_detect_AutoBuffer_hpp */
