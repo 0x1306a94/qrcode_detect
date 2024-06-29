@@ -9,27 +9,24 @@
 * [spdlog 1.11.0](https://github.com/gabime/spdlog/tree/v1.11.0)
 
 ### Build
-* `Linux`平台需要安装`libeigen3-dev`
+* `Linux`平台需要安装`libeigen3-dev` `libjpeg-turbo8-dev`
 ```bash
 git clone https://github.com/0x1306a94/qrcode_detect.git
 cd qrcode_detect
 
 # 下载三方库依赖
-./script/download_libopencv.sh
-./script/download_libzbar.sh
-./script/download_libhv.sh
-./script/download_libspdlog.sh
+make download_dependencies
 
 # 编译三方库依赖
-./script/build_libopencv.sh
-./script/build_libzbar.sh
-./script/build_libhv.sh
-./script/build_libspdlog.sh
+make build_dependencies
 
 # 构建deb安装包, 可选
-./script/build_deb.sh
+make build_deb
 
-# 编译
+# 构建Docker镜像, 可选
+make build_docker
+
+# macOS Xcode编译
 mkdir build_dir
 cd build_dir
 cmake -G Xcode ../
@@ -89,7 +86,8 @@ Optional arguments:
 * 请求结果示例,当`values`不为空时则表示原图上包含了二维码.
 ```json5
 {
-    "code": 0,
+    "state": 0,
+    "msg": "错误信息",
     "result": [
         {
             "elapsed": 25, # 检测耗时，毫秒
