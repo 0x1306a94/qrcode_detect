@@ -19,8 +19,9 @@ download_and_extract(
 
 if(APPLE)
   set(CMAKE_INSTALL_RPATH "@executable_path/../lib")
-  set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 endif()
+
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 configure_file(
   version.hpp.in
@@ -29,7 +30,7 @@ configure_file(
 
 find_package(spdlog REQUIRED PATHS ${SPDLOG_DIR} NO_DEFAULT_PATH)
 
-find_library(ZBAR_LIBS zbar HINTS "${LIBZBAR_DIR}/lib" "${LIBZBAR_DIR}/lib64" PATH_SUFFIXES "a" NO_DEFAULT_PATH REQUIRED)
+find_library(ZBAR_LIBS zbar HINTS "${LIBZBAR_DIR}/lib" "${LIBZBAR_DIR}/lib64" NO_DEFAULT_PATH REQUIRED)
 message(STATUS "ZBAR_LIBS: ${ZBAR_LIBS}")
 
 find_package(Eigen3 REQUIRED)
@@ -78,7 +79,7 @@ ${LIBZBAR_DIR}/include)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "${LIB_PUBLIC_HEADERS}")
 
-target_link_libraries(${PROJECT_NAME} PUBLIC 
+target_link_libraries(${PROJECT_NAME} PRIVATE 
   spdlog::spdlog
   ${OpenCV_LIBS}
   ${ZBAR_LIBS}
@@ -117,6 +118,32 @@ install(DIRECTORY
   DESTINATION models
 )
 
+if(APPLE)
+    message(STATUS "TARGET_FINAL_FILE: ${TARGET_FINAL_FILE}")
+    install(CODE "
+        message(STATUS \"Checking dependencies for ${PROJECT_NAME}\")
+        execute_process(
+            COMMAND /usr/bin/otool -L \${CMAKE_INSTALL_PREFIX}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}${PROJECT_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
+            OUTPUT_VARIABLE OTOOL_OUTPUT
+            RESULT_VARIABLE OTOOL_RESULT
+        )
+        if (NOT \${OTOOL_RESULT} EQUAL 0)
+            message(FATAL_ERROR \"otool failed with exit code \${OTOOL_RESULT}\")
+        endif()
+        string(FIND \"\${OTOOL_OUTPUT}\" \"${LIBZBAR_DIR}/lib/libzbar.0.dylib\" OTOOL_INDEX)
+        if (NOT \${OTOOL_INDEX} EQUAL -1)
+          execute_process(
+              COMMAND ${CMAKE_INSTALL_NAME_TOOL} -change ${LIBZBAR_DIR}/lib/libzbar.0.dylib @rpath/libzbar.dylib \${CMAKE_INSTALL_PREFIX}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}${PROJECT_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
+              OUTPUT_VARIABLE OUTPUT
+              ERROR_VARIABLE ERROR
+              RESULT_VARIABLE RESULT
+          )
+          message(STATUS \"Modifying install_name for libzbar\")
+        else()
+          message(STATUS \"libzbar.0.dylib not found in dependencies, skipping install_name_tool\")
+        endif()
+    ")
+endif()
 
 if(EXISTS "${SPDLOG_DIR}/lib64")
   file(GLOB SPDLOG_LIB_FILES "${SPDLOG_DIR}/lib64/lib*.dylib" "${SPDLOG_DIR}/lib64/lib*.so" "${SPDLOG_DIR}/lib64/lib*.so.*")
