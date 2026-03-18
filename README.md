@@ -9,7 +9,7 @@
 * [spdlog 1.11.0](https://github.com/gabime/spdlog/tree/v1.11.0)
 
 ### Build
-* `Linux`平台需要安装`libeigen3-dev` `libjpeg-turbo8-dev`
+* `Linux`平台需要安装`libeigen3-dev` `libjpeg-turbo8-dev` `libeigen3-dev` `autopoint`
 ```bash
 git clone https://github.com/0x1306a94/qrcode_detect.git
 cd qrcode_detect
