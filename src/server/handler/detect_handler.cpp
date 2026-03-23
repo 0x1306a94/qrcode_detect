@@ -29,6 +29,7 @@
 #include <qrcode_detect/core/detect_result.hpp>
 #include <qrcode_detect/core/detector.hpp>
 #include <qrcode_detect/core/detector_factory.hpp>
+#include <qrcode_detect/core/image_loader.hpp>
 
 using std::chrono::duration_cast;
 using std::chrono::milliseconds;
@@ -94,7 +95,8 @@ int Detect::detect(const HttpContextPtr &ctx) {
             }
             sw.reset();
             auto detector = ThreadDetectorFactory(params.type, *context::Context::Current());
-            auto result = detector->DetectFromBuffer(buffer);
+            auto image = qrcode::detect::ImageLoader::fromBuffer(buffer);
+            auto result = detector->detect(image);
             if (result) {
                 results.push_back(result.value());
             } else {
@@ -111,7 +113,8 @@ int Detect::detect(const HttpContextPtr &ctx) {
         std::vector<qrcode::detect::Result> results;
         auto detector = ThreadDetectorFactory(params.type, *context::Context::Current());
         for (const auto &item : params.base64) {
-            auto result = detector->DetectFromBase64(item);
+            auto image = qrcode::detect::ImageLoader::fromBase64(item);
+            auto result = detector->detect(image);
             if (result) {
                 results.push_back(result.value());
             } else {
@@ -132,7 +135,8 @@ int Detect::detectFile(const HttpContextPtr &ctx) {
         return SendFail(ctx, 400, "file empty");
     }
     auto detector = ThreadDetectorFactory(type, *context::Context::Current());
-    auto result = detector->DetectFromBytes((const unsigned char *)content.data(), content.size());
+    auto image = qrcode::detect::ImageLoader::fromBytes((const unsigned char *)content.data(), content.size());
+    auto result = detector->detect(image);
     if (result) {
         return SendSuccess(ctx, result.value());
     }

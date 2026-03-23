@@ -7,6 +7,7 @@
 
 #include <qrcode_detect/core/detector_factory.hpp>
 
+#include "null_detector.hpp"
 #include "opencv_detector.hpp"
 #include "wechat_detector.hpp"
 #include "yolov3_detector.hpp"
@@ -33,7 +34,7 @@ Detector *DetectorFactory::Create(DetectorType type, const std::string &model_di
             return _detector;
         }
         default: {
-            Detector *_detector = new Detector();
+            Detector *_detector = new NullDetector();
             return _detector;
         }
     }

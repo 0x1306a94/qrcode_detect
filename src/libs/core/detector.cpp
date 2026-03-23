@@ -9,24 +9,19 @@
 
 #include <qrcode_detect/core/AutoBuffer.hpp>
 #include <qrcode_detect/core/detect_result.hpp>
+#include <qrcode_detect/core/image_loader.hpp>
+
+#include <opencv2/core.hpp>
 
 namespace qrcode {
 namespace detect {
 
-std::optional<Result> Detector::DetectFromBase64(const std::string &source) {
-    return std::nullopt;
+std::optional<Result> Detector::detect(std::shared_ptr<cv::Mat> image) {
+    if (!image || image->empty()) {
+        return std::nullopt;
+    }
+    return detectImpl(*image);
 }
 
-std::optional<Result> Detector::DetectFromBuffer(const common::AutoBuffer &buffer) {
-    return std::nullopt;
-}
-
-std::optional<Result> Detector::DetectFromBytes(const unsigned char *bytes, std::size_t len) {
-    return std::nullopt;
-}
-
-std::optional<Result> Detector::DetectFromPath(const std::string &path) {
-    return std::nullopt;
-}
 }  // namespace detect
 };  // namespace qrcode

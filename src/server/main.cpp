@@ -169,14 +169,18 @@ int main(int argc, char *argv[]) {
 
     auto &group = program.add_mutually_exclusive_group();
     group.add_argument("-V")
-        .action([&](const auto &) { --LOG_verbosity; })
+        .action([&](const auto &) {
+            --LOG_verbosity;
+        })
         .append()
         .implicit_value(true)
         .nargs(0)
         .help("Set log level to critical, err, warn, info, debug, trace.");
 
     group.add_argument("--verbose")
-        .action([&](const auto &) { LOG_verbosity = SPDLOG_LEVEL_TRACE; })
+        .action([&](const auto &) {
+            LOG_verbosity = SPDLOG_LEVEL_TRACE;
+        })
         .default_value(false)
         .implicit_value(true)
         .help("Set log level to trace.");

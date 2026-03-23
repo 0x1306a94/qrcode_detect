@@ -7,11 +7,6 @@
 
 #include "opencv_detector.hpp"
 
-#include "base64.hpp"
-
-#include <qrcode_detect/core/AutoBuffer.hpp>
-#include <qrcode_detect/core/detect_result.hpp>
-
 #ifndef SPDLOG_ACTIVE_LEVEL
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
 #endif
@@ -21,9 +16,10 @@
 #include <spdlog/stopwatch.h>
 
 #include <opencv2/core.hpp>
-#include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/objdetect.hpp>
+
+#include <qrcode_detect/core/detect_result.hpp>
 
 using std::chrono::duration_cast;
 using std::chrono::milliseconds;
@@ -75,53 +71,8 @@ OpencvDetector::~OpencvDetector() {
     SPDLOG_TRACE("Destory {}", fmt::ptr(this));
 }
 
-std::optional<Result> OpencvDetector::DetectFromBase64(const std::string &source) {
-    if (source.empty()) {
-        return std::nullopt;
-    }
-    std::string decode_str = common::base64::from_base64(source);
-    if (decode_str.empty()) {
-        return std::nullopt;
-    }
-
-    std::vector<uchar> data(decode_str.begin(), decode_str.end());
-    cv::Mat img = cv::imdecode(data, cv::IMREAD_COLOR);
-    if (img.empty()) {
-        return std::nullopt;
-    }
-    return m_impl->Detect(img);
-}
-
-std::optional<Result> OpencvDetector::DetectFromBuffer(const common::AutoBuffer &buffer) {
-    if (buffer.size() == 0) {
-        return std::nullopt;
-    }
-    std::vector<uchar> data(buffer.data(), buffer.data() + buffer.size());
-    cv::Mat img = cv::imdecode(data, cv::IMREAD_COLOR);
-    if (img.empty()) {
-        return std::nullopt;
-    }
-    return m_impl->Detect(img);
-}
-
-std::optional<Result> OpencvDetector::DetectFromBytes(const unsigned char *bytes, std::size_t len) {
-    if (bytes == nullptr || len == 0) {
-        return std::nullopt;
-    }
-    std::vector<uchar> data(bytes, bytes + len);
-    cv::Mat img = cv::imdecode(data, cv::IMREAD_COLOR);
-    if (img.empty()) {
-        return std::nullopt;
-    }
-    return m_impl->Detect(img);
-}
-
-std::optional<Result> OpencvDetector::DetectFromPath(const std::string &path) {
-    cv::Mat img = cv::imread(path);
-    if (img.empty()) {
-        return std::nullopt;
-    }
-    return m_impl->Detect(img);
+std::optional<Result> OpencvDetector::detectImpl(const cv::Mat &image) {
+    return m_impl->Detect(image);
 }
 };  // namespace detect
 };  // namespace qrcode

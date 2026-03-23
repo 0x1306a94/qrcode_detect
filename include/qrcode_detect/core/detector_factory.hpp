@@ -8,13 +8,10 @@
 #ifndef __qrcode_detect_detector_factory_hpp
 #define __qrcode_detect_detector_factory_hpp
 
-#include "detector_type.hpp"
+#include <qrcode_detect/core/detector_type.hpp>
 
 #include <string>
 
-namespace context {
-class Context;
-};
 namespace qrcode {
 namespace detect {
 class Detector;

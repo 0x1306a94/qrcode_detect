@@ -17,7 +17,7 @@ enum class DetectorType : int {
     OpenCV = 3,
     ZBar = 4,
 };
-};
+};  // namespace detect
 };  // namespace qrcode
 
 #endif /* __qrcode_detect_detector_type_hpp */

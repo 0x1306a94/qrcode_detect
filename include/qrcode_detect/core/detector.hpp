@@ -8,15 +8,14 @@
 #ifndef __qrcode_detect_detector_hpp
 #define __qrcode_detect_detector_hpp
 
+#include <memory>
 #include <optional>
 #include <string>
 #include <vector>
 
-namespace qrcode {
-namespace common {
-class AutoBuffer;
-};
-};  // namespace qrcode
+namespace cv {
+class Mat;
+}  // namespace cv
 
 namespace qrcode {
 namespace detect {
@@ -28,10 +27,13 @@ class Detector {
   public:
     explicit Detector() = default;
     virtual ~Detector() = default;
-    virtual std::optional<Result> DetectFromBase64(const std::string &source);
-    virtual std::optional<Result> DetectFromBuffer(const common::AutoBuffer &buffer);
-    virtual std::optional<Result> DetectFromBytes(const unsigned char *bytes, std::size_t len);
-    virtual std::optional<Result> DetectFromPath(const std::string &path);
+
+    /// Detect QR codes from shared_ptr<cv::Mat>
+    std::optional<Result> detect(std::shared_ptr<cv::Mat> image);
+
+  protected:
+    /// Actual detection implementation, to be overridden by subclasses
+    virtual std::optional<Result> detectImpl(const cv::Mat &image) = 0;
 };
 };  // namespace detect
 };  // namespace qrcode

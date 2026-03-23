@@ -87,7 +87,8 @@ std::size_t image_from_url(std::string_view url, qrcode::common::AutoBuffer &buf
     size_t content_length = 0;
     size_t received_bytes = 0;
     req->http_cb = [&buffer, &content_length, &received_bytes](HttpMessage *resp, http_parser_state state, const char *data, size_t size) {
-        if (!resp->headers["Location"].empty()) return;
+        if (!resp->headers["Location"].empty())
+            return;
         if (state == HP_HEADERS_COMPLETE) {
             content_length = hv::from_string<size_t>(resp->GetHeader("Content-Length"));
         } else if (state == HP_BODY) {
@@ -159,14 +160,18 @@ int main(int argc, char *argv[]) {
 
     auto &group = program.add_mutually_exclusive_group();
     group.add_argument("-V")
-        .action([&](const auto &) { --LOG_verbosity; })
+        .action([&](const auto &) {
+            --LOG_verbosity;
+        })
         .append()
         .implicit_value(true)
         .nargs(0)
         .help("Set log level to critical, err, warn, info, debug, trace.");
 
     group.add_argument("--verbose")
-        .action([&](const auto &) { LOG_verbosity = SPDLOG_LEVEL_TRACE; })
+        .action([&](const auto &) {
+            LOG_verbosity = SPDLOG_LEVEL_TRACE;
+        })
         .default_value(false)
         .implicit_value(true)
         .help("Set log level to trace.");

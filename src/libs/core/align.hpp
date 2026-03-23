@@ -25,7 +25,9 @@ class Align {
     cv::Mat crop(const cv::Mat &inputImg, const cv::Mat &srcPts, const float paddingW, const float paddingH,
                  const int minPadding, cv::Rect &crop_roi);
 
-    void setRotate90(bool v) { rotate90_ = v; }
+    void setRotate90(bool v) {
+        rotate90_ = v;
+    }
 
   private:
     cv::Mat crop(const cv::Mat &inputImg, const int width, const int height);

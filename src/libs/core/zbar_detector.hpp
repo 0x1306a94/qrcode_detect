@@ -18,10 +18,9 @@ class ZbarDetector : public Detector {
   public:
     explicit ZbarDetector();
     virtual ~ZbarDetector();
-    std::optional<Result> DetectFromBase64(const std::string &source) override;
-    std::optional<Result> DetectFromBuffer(const common::AutoBuffer &buffer) override;
-    std::optional<Result> DetectFromBytes(const unsigned char *bytes, std::size_t len) override;
-    std::optional<Result> DetectFromPath(const std::string &path) override;
+
+  protected:
+    std::optional<Result> detectImpl(const cv::Mat &image) override;
 
   private:
     class Implement;
