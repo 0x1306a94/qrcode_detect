@@ -22,6 +22,7 @@
 #include <qrcode_detect/core/detector.hpp>
 #include <qrcode_detect/core/detector_factory.hpp>
 #include <qrcode_detect/core/detector_type.hpp>
+#include <qrcode_detect/core/image_loader.hpp>
 #include <qrcode_detect/core/version.hpp>
 
 namespace ns {
@@ -210,7 +211,8 @@ int main(int argc, char *argv[]) {
             std::cerr << "failed to load the network image" << std::endl;
             return EXIT_SUCCESS;
         }
-        auto result = detector->DetectFromBuffer(buffer);
+        auto image = qrcode::detect::ImageLoader::fromBuffer(buffer);
+        auto result = detector->detect(image);
         if (result) {
             print_result(result.value());
             if (display) {
@@ -223,7 +225,8 @@ int main(int argc, char *argv[]) {
     }
 
     try {
-        auto result = detector->DetectFromPath(input);
+        auto image = qrcode::detect::ImageLoader::fromPath(input);
+        auto result = detector->detect(image);
         if (result) {
             print_result(result.value());
             if (display) {

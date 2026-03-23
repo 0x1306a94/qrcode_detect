@@ -76,13 +76,12 @@ elseif(UNIX)
   target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_DL_LIBS})
 endif()
 
-set(YOLOV3_MODEL_UNZIP_DIR ${CMAKE_BINARY_DIR}/download/yolov3-qrcode)
-# 便于测试
 add_custom_command(TARGET ${PROJECT_NAME}
     POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory ${OPENCV_SOURCE_DIR}/cmake_build/downloads/wechat_qrcode $<TARGET_FILE_DIR:${PROJECT_NAME}>/models/wechat_qrcode
-    COMMAND ${CMAKE_COMMAND} -E copy_directory ${YOLOV3_MODEL_UNZIP_DIR} $<TARGET_FILE_DIR:${PROJECT_NAME}>/models/yolov3-qrcode
-    COMMENT "Copying wechat_qrcode models to binary directory")
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${WECHAT_QRCODE_MODELS_DIR} $<TARGET_FILE_DIR:${PROJECT_NAME}>/models/wechat_qrcode
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${YOLOV3_MODELS_DIR} $<TARGET_FILE_DIR:${PROJECT_NAME}>/models/yolov3-qrcode
+    COMMENT "Copying wechat_qrcode models to binary directory"
+)
 
     
 install(TARGETS ${PROJECT_NAME}
