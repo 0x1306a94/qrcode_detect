@@ -6,17 +6,6 @@ message(STATUS "Configuration: ${PROJECT_NAME}")
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-set(YOLOV3_MODEL_DOWNLOAD_DIR ${CMAKE_BINARY_DIR}/download)
-set(YOLOV3_MODEL_UNZIP_DIR ${CMAKE_BINARY_DIR}/download/yolov3-qrcode)
-
-download_and_extract(
-    URL https://github.com/0x1306a94/qrcode_detect/releases/download/yolov3_model_v1/yolov3-qrcode.zip
-    FILENAME ${YOLOV3_MODEL_DOWNLOAD_DIR}/yolov3-qrcode.zip
-    HASH_TYPE SHA256
-    HASH 30bacfe6552fe20f9d8d060f7b16c31a65b1f05c99ca544aa15594d903bb48f6
-    EXTRACT_DIR ${YOLOV3_MODEL_UNZIP_DIR}
-)
-
 if(APPLE)
   set(CMAKE_INSTALL_RPATH "@executable_path/../lib")
 endif()
@@ -113,8 +102,8 @@ install(TARGETS ${PROJECT_NAME}
 )
 
 install(DIRECTORY
-  ${OPENCV_SOURCE_DIR}/cmake_build/downloads/wechat_qrcode
-  ${YOLOV3_MODEL_UNZIP_DIR}
+  ${WECHAT_QRCODE_MODELS_DIR}
+  ${YOLOV3_MODELS_DIR}
   DESTINATION models
 )
 

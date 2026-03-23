@@ -136,3 +136,7 @@ iOSInjectionProject/
 /download_deps
 /build_*
 .vscode
+
+/third_party
+/third_party_build
+/install_tools

@@ -1,15 +1,18 @@
 # qrcode_detect
 
 ### 本项目基于下列开源项目构建
-* [opencv 4.9.0](https://github.com/opencv/opencv/tree/4.9.0)
-* [wechat_qrcode 4.9.0](https://github.com/opencv/opencv_contrib/tree/4.9.0/modules/wechat_qrcode)
-* [zbar 0.23.93](https://github.com/mchehab/zbar/tree/0.23.93)
-* [yolo-qrcode-opencv](https://github.com/hpc203/yolo-qrcode-opencv)
-* [libhv 1.3.0](https://github.com/ithewei/libhv/tree/v1.3.0)
-* [spdlog 1.11.0](https://github.com/gabime/spdlog/tree/v1.11.0)
+
+- [opencv](https://github.com/opencv/opencv)
+- [opencv_contrib wechat_qrcode](https://github.com/opencv/opencv_contrib)
+- [zbar](https://github.com/mchehab/zbar)
+- [yolo-qrcode-opencv](https://github.com/hpc203/yolo-qrcode-opencv)
+- [libhv](https://github.com/ithewei/libhv)
+- [spdlog](https://github.com/gabime/spdlog)
 
 ### Build
-* `Linux`平台需要安装`libeigen3-dev` `libjpeg-turbo8-dev` `libeigen3-dev` `autopoint`
+
+- `Linux`平台需要安装`libeigen3-dev` `libjpeg-turbo8-dev` `libeigen3-dev` `autopoint`
+
 ```bash
 git clone https://github.com/0x1306a94/qrcode_detect.git
 cd qrcode_detect
@@ -34,7 +37,9 @@ cmake --build . --config Release
 cmake --install . --config Release
 
 ```
+
 ### 运行命令行
+
 ```bash
 Usage: qrcode_detect_cli [--help] [--version] --model VAR --type VAR --input VAR [--display]
 
@@ -50,9 +55,11 @@ Optional arguments:
 ```bash
 qrcode_detect_cli --model ./install/models --input "https://img-blog.csdnimg.cn/07bd565b877e4606a4dd9a97498fd512.jpg?x-oss-process=image/watermark,type_ZHJvaWRzYW5zZmFsbGJhY2s,shadow_50,text_Q1NETiBAWmVyb19fX0NoZW4=,size_12,color_FFFFFF,t_70,g_se,x_16" --type 1 --display
 ```
-![](./screenshot/2024-05-06-21.27.58.png)
+
+
 
 ### 运行服务端
+
 ```bash
 Usage: qrcode_detect_server [--help] [--version] --port VAR --model VAR [--log VAR] [--daemon] [--pid VAR] [-V] [--verbose]
 
@@ -67,23 +74,29 @@ Optional arguments:
   -V             Set log level to critical, err, warn, info, debug, trace.
   --verbose      Set log level to trace.
 ```
-* 运行示例
+
+- 运行示例
+
 ```bash
 # 运行
 ./install/bin/qrcode_detect_server --port 9999 --model ./install/models
 ```
 
 ### 调用接口
-* `type` 参数控制使用哪种检测器
 
-|  值   | 检测器  |
-|  ----  | ----  |
-| 1  | [wechat_qrcode](https://github.com/opencv/opencv_contrib/modules/wechat_qrcode) |
-| 2  | [YOLOV3](https://github.com/hpc203/yolo-qrcode-opencv) |
-| 3  | [OpenCV QRCodeDetector](https://github.com/opencv/opencv) |
-| 4  | [ZBar](https://github.com/mchehab/zbar) |
+- `type` 参数控制使用哪种检测器
 
-* 请求结果示例,当`values`不为空时则表示原图上包含了二维码.
+
+| 值   | 检测器                                                                             |
+| --- | ------------------------------------------------------------------------------- |
+| 1   | [wechat_qrcode](https://github.com/opencv/opencv_contrib/modules/wechat_qrcode) |
+| 2   | [YOLOV3](https://github.com/hpc203/yolo-qrcode-opencv)                          |
+| 3   | [OpenCV QRCodeDetector](https://github.com/opencv/opencv)                       |
+| 4   | [ZBar](https://github.com/mchehab/zbar)                                         |
+
+
+- 请求结果示例,当`values`不为空时则表示原图上包含了二维码.
+
 ```json5
 {
     "state": 0,
@@ -106,7 +119,9 @@ Optional arguments:
     ]
 }
 ```
-* 通过图片链接
+
+- 通过图片链接
+
 ```bash
 curl --location 'http://127.0.0.1:9999/detect' \
 --header 'Content-Type: application/json' \
@@ -117,7 +132,9 @@ curl --location 'http://127.0.0.1:9999/detect' \
     ]
 }'
 ```
-* 通过图片base64
+
+- 通过图片base64
+
 ```bash
 curl --location 'http://127.0.0.1:9999/detect' \
 --header 'Content-Type: application/json' \
@@ -128,13 +145,18 @@ curl --location 'http://127.0.0.1:9999/detect' \
     ]
 }'
 ```
-* 上传文件
+
+- 上传文件
+
 ```bash
 curl --location 'http://127.0.0.1:9999/detect_file' \
 --form 'type="1"' \
 --form 'file=@"/Users/king/Documents/lanhu_icon/IMG_7562.jpg"'
 ```
-* 健康检查
+
+- 健康检查
+
 ```bash
 curl --location 'http://127.0.0.1:9999/health'
 ```
+

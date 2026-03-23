@@ -2,15 +2,10 @@ MAKEFLAGS += --silent
 
 clean:
 	echo "♻️ Cleaning ..."
-	rm -rf ./download_deps/*
-	rm -rf ./build_3rdparty/*
+	rm -rf ./third_party_build/*
 
 download_dependencies:
-	./script/download_libargparse.sh
-	./script/download_libhv.sh
-	./script/download_libopencv.sh
-	./script/download_libspdlog.sh
-	./script/download_libzbar.sh
+	./sync_deps.sh
 
 build_dependencies:
 	./script/build_libargparse.sh
