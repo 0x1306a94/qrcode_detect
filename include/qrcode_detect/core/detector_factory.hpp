@@ -10,13 +10,14 @@
 
 #include <qrcode_detect/core/detector_type.hpp>
 
+#include <memory>
 #include <string>
 
 namespace qrcode {
 namespace detect {
 class Detector;
 struct DetectorFactory {
-    Detector *Create(DetectorType type, const std::string &model_dir);
+    static std::shared_ptr<Detector> Create(DetectorType type, const std::string &model_dir);
 };
 
 };  // namespace detect

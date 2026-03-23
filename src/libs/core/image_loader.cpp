@@ -2,7 +2,7 @@
 //  image_loader.cpp
 //  qrcode_detect_core
 //
-//  Created by king on 2024/3/30.
+//  Created by king on 2026/3/23.
 //
 
 #include <qrcode_detect/core/AutoBuffer.hpp>

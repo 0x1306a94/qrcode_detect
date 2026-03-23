@@ -19,6 +19,9 @@ struct DetectRequest {
     qrcode::detect::DetectorType type;
     std::vector<std::string> base64;
     std::vector<std::string> url;
+    // Sliding window parameters
+    int maxWindowSize = 0;       // 0 means disabled, > 0 enables sliding window
+    float overlapRatio = 0.2f;  // overlap ratio between windows
 };
 
 };  // namespace reqparmas

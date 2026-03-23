@@ -30,6 +30,15 @@ void from_json(const nlohmann::json &j, reqparmas::DetectRequest &request) {
     if (j.contains("url") && j["url"].is_array()) {
         request.url = j["url"].get<std::vector<std::string>>();
     }
+
+    // Sliding window parameters
+    if (j.contains("maxWindowSize") && j["maxWindowSize"].is_number_integer()) {
+        request.maxWindowSize = j["maxWindowSize"].get<int>();
+    }
+
+    if (j.contains("overlapRatio") && j["overlapRatio"].is_number()) {
+        request.overlapRatio = j["overlapRatio"].get<float>();
+    }
 }
 
 void to_json(nlohmann::json &j, const qrcode::detect::Result &result) {

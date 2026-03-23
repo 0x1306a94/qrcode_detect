@@ -22,6 +22,8 @@ class OpencvDetector : public Detector {
   protected:
     std::optional<Result> detectImpl(const cv::Mat &image) override;
 
+    friend class SlidingWindowDetector;
+
   private:
     class Implement;
     std::unique_ptr<Implement> m_impl;

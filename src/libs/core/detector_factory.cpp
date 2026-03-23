@@ -7,7 +7,6 @@
 
 #include <qrcode_detect/core/detector_factory.hpp>
 
-#include "null_detector.hpp"
 #include "opencv_detector.hpp"
 #include "wechat_detector.hpp"
 #include "yolov3_detector.hpp"
@@ -15,27 +14,22 @@
 
 namespace qrcode {
 namespace detect {
-Detector *DetectorFactory::Create(DetectorType type, const std::string &model_dir) {
+std::shared_ptr<Detector> DetectorFactory::Create(DetectorType type, const std::string &model_dir) {
     switch (type) {
         case DetectorType::Wechat: {
-            WechatDetector *_detector = new WechatDetector(model_dir + "/wechat_qrcode");
-            return _detector;
+            return std::make_shared<WechatDetector>(model_dir + "/wechat_qrcode");
         }
         case DetectorType::YoloV3: {
-            Yolov3Detector *_detector = new Yolov3Detector(model_dir + "/yolov3-qrcode");
-            return _detector;
+            return std::make_shared<Yolov3Detector>(model_dir + "/yolov3-qrcode");
         }
         case DetectorType::OpenCV: {
-            OpencvDetector *_detector = new OpencvDetector();
-            return _detector;
+            return std::make_shared<OpencvDetector>();
         }
         case DetectorType::ZBar: {
-            ZbarDetector *_detector = new ZbarDetector();
-            return _detector;
+            return std::make_shared<ZbarDetector>();
         }
         default: {
-            Detector *_detector = new NullDetector();
-            return _detector;
+            return nullptr;
         }
     }
 }

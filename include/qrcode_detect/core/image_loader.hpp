@@ -14,7 +14,7 @@
 
 namespace cv {
 class Mat;
-}  // namespace cv
+};  // namespace cv
 
 namespace qrcode {
 namespace common {

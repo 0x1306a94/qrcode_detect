@@ -15,7 +15,7 @@
 
 namespace cv {
 class Mat;
-}  // namespace cv
+};  // namespace cv
 
 namespace qrcode {
 namespace detect {
@@ -34,6 +34,10 @@ class Detector {
   protected:
     /// Actual detection implementation, to be overridden by subclasses
     virtual std::optional<Result> detectImpl(const cv::Mat &image) = 0;
+
+  private:
+    // Allow SlidingWindowDetector to access detectImpl
+    friend class SlidingWindowDetector;
 };
 };  // namespace detect
 };  // namespace qrcode

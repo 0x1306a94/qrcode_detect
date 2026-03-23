@@ -12,6 +12,7 @@
 #endif
 
 #include <spdlog/fmt/chrono.h>
+#include <spdlog/fmt/fmt.h>
 #include <spdlog/spdlog.h>
 #include <spdlog/stopwatch.h>
 
@@ -30,36 +31,30 @@
 #include <qrcode_detect/core/detector.hpp>
 #include <qrcode_detect/core/detector_factory.hpp>
 #include <qrcode_detect/core/image_loader.hpp>
+#include <qrcode_detect/core/sliding_window_detector.hpp>
 
 using std::chrono::duration_cast;
 using std::chrono::milliseconds;
 
 namespace handler {
 
-qrcode::detect::Detector *ThreadDetectorFactory(qrcode::detect::DetectorType type, const context::Context &ctx) {
-    qrcode::detect::DetectorFactory detectorFactory{};
-    switch (type) {
-        case qrcode::detect::DetectorType::Wechat: {
-            static thread_local qrcode::detect::Detector *_detector = detectorFactory.Create(type, ctx.GetModelDir());
-            return _detector;
-        }
-        case qrcode::detect::DetectorType::YoloV3: {
-            static thread_local qrcode::detect::Detector *_detector = detectorFactory.Create(type, ctx.GetModelDir());
-            return _detector;
-        }
-        case qrcode::detect::DetectorType::OpenCV: {
-            static thread_local qrcode::detect::Detector *_detector = detectorFactory.Create(type, ctx.GetModelDir());
-            return _detector;
-        }
-        case qrcode::detect::DetectorType::ZBar: {
-            static thread_local qrcode::detect::Detector *_detector = detectorFactory.Create(type, ctx.GetModelDir());
-            return _detector;
-        }
-        default: {
-            qrcode::detect::Detector *_detector = detectorFactory.Create(type, ctx.GetModelDir());
-            return _detector;
-        }
+std::shared_ptr<qrcode::detect::Detector> DetectorFactory(qrcode::detect::DetectorType type,
+                                                          const context::Context &ctx,
+                                                          int maxWindowSize = 0,
+                                                          float overlapRatio = 0.2f) {
+    std::shared_ptr<qrcode::detect::Detector> detector = nullptr;
+    if (type >= qrcode::detect::DetectorType::Wechat && type <= qrcode::detect::DetectorType::ZBar) {
+        detector = qrcode::detect::DetectorFactory::Create(type, ctx.GetModelDir());
+    } else {
+        return nullptr;
     }
+
+    // Wrap with sliding window detector if maxWindowSize > 0
+    if (maxWindowSize > 0) {
+        detector = std::make_shared<qrcode::detect::SlidingWindowDetector>(std::move(detector), maxWindowSize, overlapRatio);
+    }
+
+    return detector;
 }
 
 int Detect::detect(const HttpContextPtr &ctx) {
@@ -70,6 +65,13 @@ int Detect::detect(const HttpContextPtr &ctx) {
     } catch (const std::exception &err) {
         SPDLOG_ERROR("{}", err.what());
         return SendFail(ctx, 400, err.what());
+    }
+
+    auto detector = DetectorFactory(params.type, *context::Context::Current(), params.maxWindowSize, params.overlapRatio);
+    if (!detector) {
+        SPDLOG_ERROR("create detector fial type: {}", static_cast<int>(params.type));
+        auto msg = fmt::format("create detector fial type: {}", static_cast<int>(params.type));
+        return SendFail(ctx, 400, msg);
     }
 
     do {
@@ -91,10 +93,9 @@ int Detect::detect(const HttpContextPtr &ctx) {
             if (size == 0) {
                 results.emplace_back(0);
                 continue;
-                //                return SendFail(ctx, 400, fmt::format("{} 无法加载", url));
             }
             sw.reset();
-            auto detector = ThreadDetectorFactory(params.type, *context::Context::Current());
+
             auto image = qrcode::detect::ImageLoader::fromBuffer(buffer);
             auto result = detector->detect(image);
             if (result) {
@@ -111,7 +112,6 @@ int Detect::detect(const HttpContextPtr &ctx) {
             break;
         }
         std::vector<qrcode::detect::Result> results;
-        auto detector = ThreadDetectorFactory(params.type, *context::Context::Current());
         for (const auto &item : params.base64) {
             auto image = qrcode::detect::ImageLoader::fromBase64(item);
             auto result = detector->detect(image);
@@ -131,10 +131,17 @@ int Detect::detectFile(const HttpContextPtr &ctx) {
     int status_code = HTTP_STATUS_UNFINISHED;
     std::string content = ctx->request->GetFormData("file");
     qrcode::detect::DetectorType type = static_cast<qrcode::detect::DetectorType>(ctx->request->Get<int>("type", 1));
+    int maxWindowSize = ctx->request->Get<int>("maxWindowSize", 0);
+    float overlapRatio = ctx->request->Get<float>("overlapRatio", 0.2f);
     if (content.empty()) {
         return SendFail(ctx, 400, "file empty");
     }
-    auto detector = ThreadDetectorFactory(type, *context::Context::Current());
+    auto detector = DetectorFactory(type, *context::Context::Current(), maxWindowSize, overlapRatio);
+    if (!detector) {
+        SPDLOG_ERROR("create detector fial type: {}", static_cast<int>(type));
+        auto msg = fmt::format("create detector fial type: {}", static_cast<int>(type));
+        return SendFail(ctx, 400, msg);
+    }
     auto image = qrcode::detect::ImageLoader::fromBytes((const unsigned char *)content.data(), content.size());
     auto result = detector->detect(image);
     if (result) {

@@ -40,21 +40,50 @@ cmake --install . --config Release
 
 ### 运行命令行
 
-```bash
-Usage: qrcode_detect_cli [--help] [--version] --model VAR --type VAR --input VAR [--display]
+CLI 使用子命令模式，分为 `detect` 和 `draw` 两个子命令：
 
-Optional arguments:
-  -h, --help     shows help message and exits
-  -v, --version  prints version information and exits
-  --model        model file directory. [required]
-  --type         1 wechat 2 yolov3 3 opencv 4 zbar. [nargs=0..1] [default: 1]
-  --input        local file path or remote image link. [required]
-  --display      display rectangular area.
-```
+#### detect 子命令 - 检测二维码
 
 ```bash
-qrcode_detect_cli --model ./install/models --input "https://img-blog.csdnimg.cn/07bd565b877e4606a4dd9a97498fd512.jpg?x-oss-process=image/watermark,type_ZHJvaWRzYW5zZmFsbGJhY2s,shadow_50,text_Q1NETiBAWmVyb19fX0NoZW4=,size_12,color_FFFFFF,t_70,g_se,x_16" --type 1 --display
+qrcode_detect_cli detect --model VAR --type VAR --input VAR [--display] [--maxWindowSize] [--overlapRatio]
 ```
+
+| 参数 | 说明 |
+| --- | --- |
+| --model | 模型文件目录 (必填) |
+| --type | 检测器类型: 1 wechat, 2 yolov3, 3 opencv, 4 zbar (默认: 1) |
+| --input | 本地文件路径或远程图片链接 (必填) |
+| --display | 显示检测结果框 |
+| --maxWindowSize | 滑动窗口最大边长，> 0 启用滑动窗口模式 |
+| --overlapRatio | 滑动窗口重叠比例，默认 0.2 |
+
+```bash
+# 检测本地图片
+qrcode_detect_cli detect --model ./install/models --input ./test.jpg --type 1
+
+# 检测远程图片
+qrcode_detect_cli detect --model ./install/models --input "https://example.com/qr.jpg" --type 1
+
+# 使用滑动窗口检测大图
+qrcode_detect_cli detect --model ./install/models --input ./large_image.jpg --maxWindowSize 1280 --overlapRatio 0.2
+```
+
+#### visualize 子命令 - 可视化滑动窗口预览
+
+```bash
+qrcode_detect_cli visualize -i VAR -o VAR [--maxWindowSize] [--overlapRatio]
+```
+
+| 参数 | 说明 |
+| --- | --- |
+| -i, --input | 输入图片路径 (必填) |
+| -o, --output | 输出图片路径 (必填) |
+| --maxWindowSize | 滑动窗口最大边长 (默认: 1280) |
+| --overlapRatio | 滑动窗口重叠比例 (默认: 0.2) |
+
+```bash
+# 可视化滑动窗口预览
+qrcode_detect_cli visualize -i ./large_image.jpg -o ./windows_preview.jpg
 
 
 
@@ -158,5 +187,92 @@ curl --location 'http://127.0.0.1:9999/detect_file' \
 
 ```bash
 curl --location 'http://127.0.0.1:9999/health'
+```
+
+### 滑动窗口检测
+
+对于超宽超长的图片，直接检测可能会出现漏检。可以使用滑动窗口模式将大图分割成多个重叠的小窗口进行检测，提高检出率。
+
+#### 参数说明
+
+| 参数 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| maxWindowSize | int | 0 | 滑动窗口的最大边长。设置为 > 0 时启用滑动窗口模式，0 或不设置则禁用 |
+| overlapRatio | float | 0.2 | 相邻窗口之间的重叠比例，范围 0.0-1.0，推荐 0.2 (20%) |
+
+#### 使用示例
+
+- JSON 请求（启用滑动窗口）
+
+```bash
+curl --location 'http://127.0.0.1:9999/detect' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "type" : 1,
+    "url" : ["https://example.com/large_image.jpg"],
+    "maxWindowSize": 1280,
+    "overlapRatio": 0.2
+}'
+```
+
+- 上传文件（启用滑动窗口）
+
+```bash
+curl --location 'http://127.0.0.1:9999/detect_file' \
+--form 'type="1"' \
+--form 'maxWindowSize="1280"' \
+--form 'overlapRatio="0.2"' \
+--form 'file=@"/path/to/large_image.jpg"'
+```
+
+#### 原理示意图
+
+```
+原图 (超宽超长图片，例如 4000x2000)
++--------------------------------------------------+
+|                                                  |
+|     [二维码 A]                    [二维码 B]    |
+|       □□□                       ■■■■           |
+|       □□□                       ■■■■           |
+|                                                  |
++--------------------------------------------------+
+
+启用滑动窗口 (maxWindowSize=1280, overlapRatio=0.2)
+步长 = 1280 * (1 - 0.2) = 1024
+
+窗口 1 (0,0)        窗口 2 (1024,0)    窗口 3 (2048,0)   窗口 4 (3072,0)
++------------+    +------------+      +------------+    +------------+
+|            |    |            |      |            |    |            |
+|  □□□       |    |            |      |      ■■■■  |    |      ■■■■  |
+|  □□□       |    |            |      |      ■■■■  |    |      ■■■■  |
+|            |    |            |      |            |    |            |
++------------+    +------------+      +------------+    +------------+
+      ↓                ↓                 ↓                 ↓
+   检测到 A         无二维码          检测到 B          检测到 B (重复)
+                                                             ↓
+                                                    使用 IoU 去重
+                                                             ↓
+最终结果: [二维码 A], [二维码 B]
+```
+
+**参数计算：**
+
+| 参数 | 值 | 说明 |
+| --- | --- | --- |
+| maxWindowSize | 1280 | 每个窗口最大边长 1280 像素 |
+| overlapRatio | 0.2 | 窗口之间重叠 20% |
+| 步长 | 1024 | 1280 × (1 - 0.2) = 1024 |
+| 水平窗口数 | ceil(4000 / 1024) = 4 | |
+| 垂直窗口数 | ceil(2000 / 1024) = 2 | |
+| 总窗口数 | 4 × 2 = 8 | |
+
+**去重逻辑：**
+
+```
+判断两个检测结果是否为同一个二维码：
+1. 内容相同 (content 相等)
+2. 位置重叠 > 50% (IoU > 0.5)
+
+保留第一个，去除重复
 ```
 

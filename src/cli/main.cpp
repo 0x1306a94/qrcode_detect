@@ -1,4 +1,5 @@
 #include <memory>
+#include <random>
 #include <sstream>
 #include <string_view>
 
@@ -23,6 +24,7 @@
 #include <qrcode_detect/core/detector_factory.hpp>
 #include <qrcode_detect/core/detector_type.hpp>
 #include <qrcode_detect/core/image_loader.hpp>
+#include <qrcode_detect/core/sliding_window_detector.hpp>
 #include <qrcode_detect/core/version.hpp>
 
 namespace ns {
@@ -138,29 +140,43 @@ int main(int argc, char *argv[]) {
        << "git_branch: " << QRCODE_DETECT_GIT_BRANCH << "\n"
        << "git_hash: " << QRCODE_DETECT_GIT_HASH;
 
-    argparse::ArgumentParser program("qrcode_detect_cli", ss.str(), argparse::default_arguments::all, true, std::cerr);
+    argparse::ArgumentParser program("qrcode_detect_cli", ss.str(), argparse::default_arguments::help, true, std::cerr);
 
-    program.add_argument("--model")
+    // Add subcommands
+    argparse::ArgumentParser detect_cmd("detect", ss.str(), argparse::default_arguments::help, true, std::cerr);
+    argparse::ArgumentParser visualize_cmd("visualize", ss.str(), argparse::default_arguments::help, true, std::cerr);
+
+    // detect subcommand arguments
+    detect_cmd.add_argument("-m", "--model")
         .required()
         .help("model file directory.");
 
-    program.add_argument("--type")
-        .required()
+    detect_cmd.add_argument("--type")
         .scan<'i', int>()
         .default_value(1)
         .help("1 wechat 2 yolov3 3 opencv 4 zbar.");
 
-    program.add_argument("--input")
+    detect_cmd.add_argument("-i", "--input")
         .required()
         .help("local file path or remote image link.");
 
-    program.add_argument("--display")
+    detect_cmd.add_argument("--display")
         .default_value(false)
         .implicit_value(true)
         .help("display rectangular area.");
 
-    auto &group = program.add_mutually_exclusive_group();
-    group.add_argument("-V")
+    detect_cmd.add_argument("--maxWindowSize")
+        .scan<'i', int>()
+        .default_value(0)
+        .help("sliding window max size, > 0 to enable sliding window mode.");
+
+    detect_cmd.add_argument("--overlapRatio")
+        .scan<'g', float>()
+        .default_value(0.2f)
+        .help("sliding window overlap ratio, 0.0-1.0, default 0.2.");
+
+    auto &detect_verbosity_group = detect_cmd.add_mutually_exclusive_group();
+    detect_verbosity_group.add_argument("-V")
         .action([&](const auto &) {
             --LOG_verbosity;
         })
@@ -169,13 +185,35 @@ int main(int argc, char *argv[]) {
         .nargs(0)
         .help("Set log level to critical, err, warn, info, debug, trace.");
 
-    group.add_argument("--verbose")
+    detect_verbosity_group.add_argument("--verbose")
         .action([&](const auto &) {
             LOG_verbosity = SPDLOG_LEVEL_TRACE;
         })
         .default_value(false)
         .implicit_value(true)
         .help("Set log level to trace.");
+
+    // visualize subcommand arguments
+    visualize_cmd.add_argument("-i", "--input")
+        .required()
+        .help("local file path or remote image link.");
+
+    visualize_cmd.add_argument("--maxWindowSize")
+        .scan<'i', int>()
+        .default_value(1280)
+        .help("sliding window max size, default 1280.");
+
+    visualize_cmd.add_argument("--overlapRatio")
+        .scan<'g', float>()
+        .default_value(0.2f)
+        .help("sliding window overlap ratio, 0.0-1.0, default 0.2.");
+
+    visualize_cmd.add_argument("-o", "--output")
+        .required()
+        .help("output image path.");
+
+    program.add_subparser(detect_cmd);
+    program.add_subparser(visualize_cmd);
 
     try {
         program.parse_args(argc, argv);
@@ -185,60 +223,123 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    if (LOG_verbosity < 0) {
-        spdlog::set_level(spdlog::level::off);
-    } else {
-        spdlog::set_level(static_cast<spdlog::level::level_enum>(LOG_verbosity));
-    }
+    // Handle detect subcommand
+    if (program.is_subcommand_used("detect")) {
+        if (LOG_verbosity < 0) {
+            spdlog::set_level(spdlog::level::off);
+        } else {
+            spdlog::set_level(static_cast<spdlog::level::level_enum>(LOG_verbosity));
+        }
 
-    int argType = program.get<int>("--type");
-    if (argType < static_cast<int>(qrcode::detect::DetectorType::Wechat) || argType > static_cast<int>(qrcode::detect::DetectorType::ZBar)) {
-        std::cerr << "type parameter is invalid." << std::endl;
-        return EXIT_SUCCESS;
-    }
+        std::string input = detect_cmd.get<std::string>("--input");
+        std::string model_dir = detect_cmd.get<std::string>("--model");
+        int argType = detect_cmd.get<int>("--type");
+        bool display = detect_cmd.is_used("--display");
+        int maxWindowSize = detect_cmd.get<int>("--maxWindowSize");
+        float overlapRatio = detect_cmd.get<float>("--overlapRatio");
 
-    std::string model_dir = program.get<std::string>("--model");
-    std::string input = program.get<std::string>("--input");
-    bool display = program.is_used("--display");
-
-    qrcode::detect::DetectorFactory detectorFactory{};
-    std::shared_ptr<qrcode::detect::Detector> detector{detectorFactory.Create(static_cast<qrcode::detect::DetectorType>(argType), model_dir)};
-
-    if (input.find("https://") != std::string::npos || input.find("http://") != std::string::npos) {
-        qrcode::common::AutoBuffer buffer;
-        auto size = image_from_url(input, buffer);
-        if (size == 0) {
-            std::cerr << "failed to load the network image" << std::endl;
+        if (argType < static_cast<int>(qrcode::detect::DetectorType::Wechat) || argType > static_cast<int>(qrcode::detect::DetectorType::ZBar)) {
+            std::cerr << "type parameter is invalid." << std::endl;
             return EXIT_SUCCESS;
         }
-        auto image = qrcode::detect::ImageLoader::fromBuffer(buffer);
-        auto result = detector->detect(image);
-        if (result) {
-            print_result(result.value());
-            if (display) {
-                std::vector<uchar> data(buffer.data(), buffer.data() + buffer.size());
-                cv::Mat img = cv::imdecode(data, cv::IMREAD_COLOR);
-                dispaly_result(result.value(), img);
+
+        auto detector = qrcode::detect::DetectorFactory::Create(static_cast<qrcode::detect::DetectorType>(argType), model_dir);
+        // Wrap with sliding window detector if maxWindowSize > 0
+        if (maxWindowSize > 0) {
+            detector = std::make_shared<qrcode::detect::SlidingWindowDetector>(std::move(detector), maxWindowSize, overlapRatio);
+        }
+
+        if (input.find("https://") != std::string::npos || input.find("http://") != std::string::npos) {
+            qrcode::common::AutoBuffer buffer;
+            auto size = image_from_url(input, buffer);
+            if (size == 0) {
+                std::cerr << "failed to load the network image" << std::endl;
+                return EXIT_SUCCESS;
             }
+            auto image = qrcode::detect::ImageLoader::fromBuffer(buffer);
+            auto result = detector->detect(image);
+            if (result) {
+                print_result(result.value());
+                if (display) {
+                    std::vector<uchar> data(buffer.data(), buffer.data() + buffer.size());
+                    cv::Mat img = cv::imdecode(data, cv::IMREAD_COLOR);
+                    dispaly_result(result.value(), img);
+                }
+            }
+            return EXIT_SUCCESS;
+        }
+
+        try {
+            auto image = qrcode::detect::ImageLoader::fromPath(input);
+            auto result = detector->detect(image);
+            if (result) {
+                print_result(result.value());
+                if (display) {
+                    cv::Mat img = cv::imread(input);
+                    dispaly_result(result.value(), img);
+                }
+            }
+        } catch (const std::exception &err) {
+            std::cerr << err.what() << std::endl;
+            return EXIT_FAILURE;
         }
         return EXIT_SUCCESS;
     }
 
-    try {
-        auto image = qrcode::detect::ImageLoader::fromPath(input);
-        auto result = detector->detect(image);
-        if (result) {
-            print_result(result.value());
-            if (display) {
-                cv::Mat img = cv::imread(input);
-                dispaly_result(result.value(), img);
+    // Handle visualize subcommand
+    if (program.is_subcommand_used("visualize")) {
+        std::string input = visualize_cmd.get<std::string>("--input");
+        std::string output = visualize_cmd.get<std::string>("--output");
+        int maxWindowSize = visualize_cmd.get<int>("--maxWindowSize");
+        float overlapRatio = visualize_cmd.get<float>("--overlapRatio");
+
+        // Initialize random generator
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_int_distribution<int> dist(0, 255);
+
+        try {
+            auto image = qrcode::detect::ImageLoader::fromPath(input);
+            if (!image || image->empty()) {
+                std::cerr << "failed to load image: " << input << std::endl;
+                return EXIT_FAILURE;
             }
+            auto windows = qrcode::detect::SlidingWindowDetector::CalculateWindows(
+                image->cols, image->rows, maxWindowSize, overlapRatio);
+            cv::Mat img = cv::imread(input);
+
+            int index = 0;
+            for (const auto &rect : windows) {
+                // Generate random color
+                cv::Scalar color(dist(gen), dist(gen), dist(gen));
+
+                // Draw rectangle
+                cv::rectangle(img, cv::Rect(rect.x, rect.y, rect.width, rect.height),
+                              color, 2, cv::LINE_8, 0);
+
+                // Draw index number at center
+                int centerX = rect.x + rect.width / 2;
+                int centerY = rect.y + rect.height / 2;
+                cv::putText(img, std::to_string(index),
+                            cv::Point(centerX - 20, centerY + 20),
+                            cv::FONT_HERSHEY_SIMPLEX, 2.0, color, 3);
+
+                index++;
+            }
+            if (!cv::imwrite(output, img)) {
+                std::cerr << "failed to save image: " << output << std::endl;
+                return EXIT_FAILURE;
+            }
+            std::cout << "Saved sliding windows image to: " << output << std::endl;
+            std::cout << "Total windows: " << windows.size() << std::endl;
+            return EXIT_SUCCESS;
+        } catch (const std::exception &err) {
+            std::cerr << err.what() << std::endl;
+            return EXIT_FAILURE;
         }
-    } catch (const std::exception &err) {
-        std::cerr << err.what() << std::endl;
-        std::cerr << program;
-        return EXIT_FAILURE;
     }
 
-    return EXIT_SUCCESS;
+    // No subcommand specified, show help
+    std::cerr << program;
+    return EXIT_FAILURE;
 }
