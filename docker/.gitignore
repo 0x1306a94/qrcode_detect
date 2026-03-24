@@ -1,2 +1,4 @@
 cmake_build/
 cmake_install/
+cache/
+logs/

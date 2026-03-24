@@ -1,0 +1,15 @@
+version: "3.8"
+
+services:
+  qrcode_detect:
+    image: qrcode_detect:v1.0.0
+    container_name: qrcode_detect_server
+    ports:
+      - "9999:9999"
+    volumes:
+      - ./cache:/var/cache/qrcode_detect
+      - ./logs:/var/log/qrcode_detect
+    environment:
+      - QRCODE_DETECT_CACHE_DIR=/var/cache/qrcode_detect
+      - DISABLE_CONSOLE_LOG=1
+    restart: unless-stopped

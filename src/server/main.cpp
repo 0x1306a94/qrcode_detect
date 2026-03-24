@@ -203,6 +203,10 @@ int main(int argc, char *argv[]) {
         log_dir = program.get<std::string>("--log");
     }
     std::string cache_dir;
+    const char *env_cache_dir = std::getenv("QRCODE_DETECT_CACHE_DIR");
+    if (env_cache_dir) {
+        cache_dir = env_cache_dir;
+    }
     if (program.is_used("--cache")) {
         cache_dir = program.get<std::string>("--cache");
     }

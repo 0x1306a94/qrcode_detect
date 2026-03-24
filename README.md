@@ -90,13 +90,14 @@ qrcode_detect_cli visualize -i ./large_image.jpg -o ./windows_preview.jpg
 ### 运行服务端
 
 ```bash
-Usage: qrcode_detect_server [--help] [--version] --port VAR --model VAR [--log VAR] [--daemon] [--pid VAR] [-V] [--verbose]
+Usage: qrcode_detect_server [--help] [--version] --port VAR --model VAR [--log VAR] [--daemon] [--pid VAR] [-V] [--verbose] [-c VAR]
 
 Optional arguments:
   -h, --help     shows help message and exits
   -v, --version  prints version information and exits
   -p, --port     service port. [required]
   -m, --model    model file directory. [required]
+  -c, --cache    cache directory for URL detection results.
   -l, --log      log file directory.
   -d, --daemon   run daemon.
   --pid          pidfile path.
@@ -107,9 +108,22 @@ Optional arguments:
 - 运行示例
 
 ```bash
-# 运行
+# 运行（无缓存）
+./install/bin/qrcode_detect_server --port 9999 --model ./install/models
+
+# 运行（启用缓存）
+./install/bin/qrcode_detect_server --port 9999 --model ./install/models --cache ./cache
+
+# 或通过环境变量配置缓存目录
+export QRCODE_DETECT_CACHE_DIR=/path/to/cache
 ./install/bin/qrcode_detect_server --port 9999 --model ./install/models
 ```
+
+- 环境变量
+
+| 变量名 | 说明 |
+| --- | --- |
+| QRCODE_DETECT_CACHE_DIR | 缓存目录，环境变量优先级低于命令行 `-c/--cache` 参数 |
 
 ### 调用接口
 
@@ -122,6 +136,17 @@ Optional arguments:
 | 2   | [YOLOV3](https://github.com/hpc203/yolo-qrcode-opencv)                          |
 | 3   | [OpenCV QRCodeDetector](https://github.com/opencv/opencv)                       |
 | 4   | [ZBar](https://github.com/mchehab/zbar)                                         |
+
+- 请求参数说明
+
+| 参数 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| type | int | 1 | 检测器类型: 1 wechat, 2 yolov3, 3 opencv, 4 zbar |
+| url | array | - | 图片 URL 数组 |
+| base64 | array | - | 图片 base64 数组 |
+| maxWindowSize | int | 0 | 滑动窗口最大边长，> 0 启用滑动窗口模式 |
+| overlapRatio | float | 0.2 | 滑动窗口重叠比例 |
+| cache | bool | false | 是否启用缓存，需要服务端配置缓存目录 |
 
 
 - 请求结果示例,当`values`不为空时则表示原图上包含了二维码.
@@ -158,9 +183,14 @@ curl --location 'http://127.0.0.1:9999/detect' \
     "type" : 1,
     "url" : [
         "https://img.zcool.cn/community/01ba0f5b041fc8a801209a8543e9a8.jpg@1280w_1l_2o_100sh.jpg"
-    ]
+    ],
+    "cache": true
 }'
 ```
+
+**注意：** 启用缓存需要满足以下条件：
+1. 服务端配置了 `-c/--cache` 参数或设置了 `QRCODE_DETECT_CACHE_DIR` 环境变量
+2. 请求中显式传入 `"cache": true`
 
 - 通过图片base64
 
@@ -275,4 +305,33 @@ curl --location 'http://127.0.0.1:9999/detect_file' \
 
 保留第一个，去除重复
 ```
+
+### 缓存检测结果
+
+对于 URL 图片检测，可以启用缓存避免重复检测相同 URL。
+
+#### 使用条件
+
+1. 服务端配置了 `-c/--cache` 参数或设置了 `QRCODE_DETECT_CACHE_DIR` 环境变量
+2. 请求中显式传入 `"cache": true`
+
+#### 缓存机制
+
+- 缓存 key 由 URL + 检测器类型 + maxWindowSize + overlapRatio 的 MD5 值生成
+- 缓存文件保存为 JSON 格式，存储在配置的缓存目录中
+
+#### 使用示例
+
+```bash
+# 启用缓存检测
+curl --location 'http://127.0.0.1:9999/detect' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "type" : 1,
+    "url" : ["https://example.com/qr.jpg"],
+    "cache": true
+}'
+```
+
+第一次请求会执行检测并缓存结果，后续相同参数的请求将直接返回缓存结果。
 
