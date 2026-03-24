@@ -29,4 +29,10 @@ cmake --install $CMAKE_BUILD_DIR
 mkdir -p $CMAKE_INSTALL_DIR/config
 echo "/opt/qrcode_detect/lib" > $CMAKE_INSTALL_DIR/config/qrcode_detect.conf
 
+# Create tar.gz package of the install directory
+TAR_FILE="${CURRENT_SCRIPT_DIR}/${INSTALL_DIR_NAME}-${VERSION}.tar.gz"
+tar -czf "$TAR_FILE" -C "$CMAKE_INSTALL_DIR" .
+
+echo "Created tar.gz package: $TAR_FILE"
+
 docker build -t "${DOCKER_IMAGE_NAME}" $CURRENT_SCRIPT_DIR

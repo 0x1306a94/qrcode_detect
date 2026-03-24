@@ -2,3 +2,4 @@ cmake_build/
 cmake_install/
 cache/
 logs/
+qrcode_detect-*.tar.gz
