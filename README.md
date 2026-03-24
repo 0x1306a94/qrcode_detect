@@ -84,7 +84,7 @@ qrcode_detect_cli visualize -i VAR -o VAR [--maxWindowSize] [--overlapRatio]
 ```bash
 # 可视化滑动窗口预览
 qrcode_detect_cli visualize -i ./large_image.jpg -o ./windows_preview.jpg
-
+```
 
 
 ### 运行服务端
