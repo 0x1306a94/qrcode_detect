@@ -28,23 +28,51 @@ SlidingWindowDetector::~SlidingWindowDetector() = default;
 std::vector<Rect> SlidingWindowDetector::CalculateWindows(int imageWidth, int imageHeight, int maxWindowSize, float overlapRatio) {
     std::vector<Rect> windows;
 
-    int windowWidth = maxWindowSize;
-    int windowHeight = maxWindowSize;
+    // Edge case: if image is smaller than window, just return one full image window
+    if (imageWidth <= maxWindowSize && imageHeight <= maxWindowSize) {
+        windows.emplace_back(0, 0, imageWidth, imageHeight);
+        return windows;
+    }
 
     // Calculate step size (with overlap)
-    int stepX = static_cast<int>(windowWidth * (1.0f - overlapRatio));
-    int stepY = static_cast<int>(windowHeight * (1.0f - overlapRatio));
+    int stepX = static_cast<int>(maxWindowSize * (1.0f - overlapRatio));
+    int stepY = static_cast<int>(maxWindowSize * (1.0f - overlapRatio));
 
-    // Slide horizontally
-    for (int y = 0; y < imageHeight; y += stepY) {
-        // Slide vertically
-        for (int x = 0; x < imageWidth; x += stepX) {
-            // Calculate window dimensions (handle edge cases)
-            int width = std::min(windowWidth, imageWidth - x);
-            int height = std::min(windowHeight, imageHeight - y);
+    // Ensure step is at least 1 to avoid infinite loop
+    stepX = std::max(stepX, 1);
+    stepY = std::max(stepY, 1);
 
-            windows.emplace_back(x, y, width, height);
+    for (int y = 0;; y += stepY) {
+        int windowY = y;
+        int windowHeight = std::min(maxWindowSize, imageHeight - y);
+
+        // If remaining height is too small, snap to bottom edge
+        if (imageHeight - y < maxWindowSize) {
+            windowY = imageHeight - maxWindowSize;
+            windowHeight = maxWindowSize;
         }
+
+        bool yFinished = (windowY + windowHeight >= imageHeight);
+
+        for (int x = 0;; x += stepX) {
+            int windowX = x;
+            int windowWidth = std::min(maxWindowSize, imageWidth - x);
+
+            // If remaining width is too small, snap to right edge
+            if (imageWidth - x < maxWindowSize) {
+                windowX = imageWidth - maxWindowSize;
+                windowWidth = maxWindowSize;
+            }
+
+            windows.emplace_back(windowX, windowY, windowWidth, windowHeight);
+
+            bool xFinished = (windowX + windowWidth >= imageWidth);
+            if (xFinished)
+                break;
+        }
+
+        if (yFinished)
+            break;
     }
 
     return windows;
