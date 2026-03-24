@@ -4,22 +4,6 @@ set -ex
 
 
 GIT_ROOT_DIR=$(realpath $(dirname $(dirname $0)))
-DEPS_DIR=$GIT_ROOT_DIR/download_deps
-OPENCV_VERSION="4.9.0"
-OPENCV_DIR=$DEPS_DIR/opencv_$OPENCV_VERSION
-OPENCV_SOURCE_CONTRIB_DIR=$DEPS_DIR/opencv_contrib_$OPENCV_VERSION
-OPENCV_INSTALL_DIR=$GIT_ROOT_DIR/build_3rdparty/opencv_$OPENCV_VERSION
-OPENCV_BUILD_DIR=$OPENCV_DIR/cmake_build
-
-if [[ -d "$OPENCV_BUILD_DIR" ]]; then
-    rm -rf $OPENCV_BUILD_DIR
-fi
-
-if [[ -d "$OPENCV_INSTALL_DIR" ]]; then
-    rm -rf $OPENCV_INSTALL_DIR
-fi
-
-
 LIB_NAME=opencv
 THIRD_PARTY_DIR=$GIT_ROOT_DIR/third_party
 THIRD_PARTY_BUILD_DIR=$GIT_ROOT_DIR/third_party_build
