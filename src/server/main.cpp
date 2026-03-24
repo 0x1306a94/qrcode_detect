@@ -156,6 +156,9 @@ int main(int argc, char *argv[]) {
         .required()
         .help("model file directory.");
 
+    program.add_argument("-c", "--cache")
+        .help("cache directory for URL detection results.");
+
     program.add_argument("-l", "--log")
         .help("log file directory.");
 
@@ -199,6 +202,10 @@ int main(int argc, char *argv[]) {
     if (program.is_used("--log")) {
         log_dir = program.get<std::string>("--log");
     }
+    std::string cache_dir;
+    if (program.is_used("--cache")) {
+        cache_dir = program.get<std::string>("--cache");
+    }
 
     bool daemon = program.get<bool>("daemon");
     if (daemon && !qrcode::start_daemon()) {
@@ -226,7 +233,7 @@ int main(int argc, char *argv[]) {
     signal(SIGQUIT, signal_exit_handler);
 
     setup_log(log_dir);
-    context::Context::Init(model_dir);
+    context::Context::Init(model_dir, cache_dir);
 
     SPDLOG_INFO("start http server 0.0.0.0: {}", port);
 

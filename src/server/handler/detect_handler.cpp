@@ -18,12 +18,13 @@
 
 #include <hv/HttpContext.h>
 #include <hv/HttpService.h>
+#include <hv/json.hpp>
 
 #include "common_handler.hpp"
 
+#include "../MD5.h"
 #include "../image_downloader.hpp"
 #include "../reqparmas.hpp"
-
 #include "../server_context.hpp"
 
 #include <qrcode_detect/core/AutoBuffer.hpp>
@@ -33,10 +34,95 @@
 #include <qrcode_detect/core/image_loader.hpp>
 #include <qrcode_detect/core/sliding_window_detector.hpp>
 
+#include <filesystem>
+#include <fstream>
+
+namespace fs = std::filesystem;
+
 using std::chrono::duration_cast;
 using std::chrono::milliseconds;
 
 namespace handler {
+
+// Simple hash function for cache key
+static std::string computeCacheKey(const std::string &url, int type, int maxWindowSize, float overlapRatio) {
+    std::string data = url + "|" + std::to_string(type) + "|" + std::to_string(maxWindowSize) + "|" + std::to_string(overlapRatio);
+
+    // Use MD5 for cache key
+    MD5 md5;
+    MD5_CTX ctx;
+    md5.MD5Init(&ctx);
+    md5.MD5Update(&ctx, (unsigned char *)data.data(), static_cast<unsigned int>(data.size()));
+    unsigned char digest[16];
+    md5.MD5Final(digest, &ctx);
+
+    char hex[33];
+    for (int i = 0; i < 16; i++) {
+        snprintf(hex + i * 2, 3, "%02x", digest[i]);
+    }
+    hex[32] = '\0';
+    return std::string(hex);
+}
+
+static std::string getCacheDir() {
+    auto ctx = context::Context::Current();
+    if (!ctx) {
+        return "";
+    }
+    return ctx->GetCacheDir();
+}
+
+static bool loadCache(const std::string &cacheKey, qrcode::detect::Result &result) {
+    std::string cacheDir = getCacheDir();
+    if (cacheDir.empty()) {
+        return false;
+    }
+
+    auto cachePath = fs::path(cacheDir) / (cacheKey + ".json");
+    if (!fs::exists(cachePath)) {
+        return false;
+    }
+
+    try {
+        std::ifstream file(cachePath);
+        if (!file.is_open()) {
+            return false;
+        }
+        nlohmann::json j;
+        file >> j;
+        ns::from_json(j, result);
+        SPDLOG_TRACE("cache hit: {}", cacheKey);
+        return true;
+    } catch (const std::exception &err) {
+        SPDLOG_WARN("load cache failed: {} - {}", cachePath.string(), err.what());
+        return false;
+    }
+}
+
+static bool saveCache(const std::string &cacheKey, const qrcode::detect::Result &result) {
+    std::string cacheDir = getCacheDir();
+    if (cacheDir.empty()) {
+        return false;
+    }
+
+    try {
+        // Create cache directory if not exists
+        if (!fs::exists(cacheDir)) {
+            fs::create_directories(cacheDir);
+        }
+
+        auto cachePath = fs::path(cacheDir) / (cacheKey + ".json");
+        nlohmann::json j;
+        ns::to_json(j, result);
+        std::ofstream file(cachePath);
+        file << j.dump(2);
+        SPDLOG_TRACE("cache saved: {}", cacheKey);
+        return true;
+    } catch (const std::exception &err) {
+        SPDLOG_WARN("save cache failed: {} - {}", cacheKey, err.what());
+        return false;
+    }
+}
 
 std::shared_ptr<qrcode::detect::Detector> DetectorFactory(qrcode::detect::DetectorType type,
                                                           const context::Context &ctx,
@@ -80,18 +166,32 @@ int Detect::detect(const HttpContextPtr &ctx) {
         }
 
         std::vector<qrcode::detect::Result> results;
+        std::string cacheDir = getCacheDir();
+        bool useCache = !cacheDir.empty() && params.cache;
+
         for (const auto &url : params.url) {
             if (!(url.find("http://") == 0 || url.find("https://") == 0)) {
                 //                return SendFail(ctx, 400, fmt::format("{} Invalid url", url));
-                results.emplace_back(0);
+                results.emplace_back(0u);
                 continue;
             }
+
+            // Try to load from cache
+            if (useCache) {
+                std::string cacheKey = computeCacheKey(url, static_cast<int>(params.type), params.maxWindowSize, params.overlapRatio);
+                qrcode::detect::Result cachedResult{0};
+                if (loadCache(cacheKey, cachedResult)) {
+                    results.push_back(cachedResult);
+                    continue;
+                }
+            }
+
             qrcode::common::AutoBuffer buffer;
             spdlog::stopwatch sw;
             auto size = qrcode::download::image_from_url(url, buffer);
             SPDLOG_TRACE("加载网络图片: url: {} elapsed: {}", url, duration_cast<milliseconds>(sw.elapsed()));
             if (size == 0) {
-                results.emplace_back(0);
+                results.emplace_back(0u);
                 continue;
             }
             sw.reset();
@@ -100,8 +200,13 @@ int Detect::detect(const HttpContextPtr &ctx) {
             auto result = detector->detect(image);
             if (result) {
                 results.push_back(result.value());
+                // Save to cache
+                if (useCache) {
+                    std::string cacheKey = computeCacheKey(url, static_cast<int>(params.type), params.maxWindowSize, params.overlapRatio);
+                    saveCache(cacheKey, result.value());
+                }
             } else {
-                results.emplace_back(0);
+                results.emplace_back(0u);
             }
         }
         return SendSuccess(ctx, results);

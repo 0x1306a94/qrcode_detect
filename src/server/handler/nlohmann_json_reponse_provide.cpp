@@ -39,6 +39,11 @@ void from_json(const nlohmann::json &j, reqparmas::DetectRequest &request) {
     if (j.contains("overlapRatio") && j["overlapRatio"].is_number()) {
         request.overlapRatio = j["overlapRatio"].get<float>();
     }
+
+    // Cache control
+    if (j.contains("cache") && j["cache"].is_boolean()) {
+        request.cache = j["cache"].get<bool>();
+    }
 }
 
 void to_json(nlohmann::json &j, const qrcode::detect::Result &result) {
@@ -84,6 +89,44 @@ void to_json(nlohmann::json &j, const qrcode::detect::Rect &rect) {
         {"width", rect.width},
         {"height", rect.height},
     };
+}
+
+void from_json(const nlohmann::json &j, qrcode::detect::Rect &rect) {
+    if (j.contains("x")) {
+        rect.x = j["x"].get<int>();
+    }
+    if (j.contains("y")) {
+        rect.y = j["y"].get<int>();
+    }
+    if (j.contains("width")) {
+        rect.width = j["width"].get<int>();
+    }
+    if (j.contains("height")) {
+        rect.height = j["height"].get<int>();
+    }
+}
+
+void from_json(const nlohmann::json &j, qrcode::detect::Value &value) {
+    if (j.contains("content")) {
+        value.content = j["content"].get<std::string>();
+    }
+    if (j.contains("points")) {
+        from_json(j["points"], value.rect);
+    }
+}
+
+void from_json(const nlohmann::json &j, qrcode::detect::Result &result) {
+    if (j.contains("elapsed")) {
+        result.elapsed = j["elapsed"].get<uint64_t>();
+    }
+    if (j.contains("values") && j["values"].is_array()) {
+        result.values.clear();
+        for (const auto &item : j["values"]) {
+            qrcode::detect::Value value("");
+            from_json(item, value);
+            result.values.push_back(value);
+        }
+    }
 }
 
 };  // namespace ns

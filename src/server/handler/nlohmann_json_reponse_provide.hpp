@@ -27,6 +27,9 @@ struct DetectResponse;
 
 namespace ns {
 void from_json(const nlohmann::json &j, reqparmas::DetectRequest &request);
+void from_json(const nlohmann::json &j, qrcode::detect::Result &result);
+void from_json(const nlohmann::json &j, qrcode::detect::Value &value);
+void from_json(const nlohmann::json &j, qrcode::detect::Rect &rect);
 void to_json(nlohmann::json &j, const qrcode::detect::Result &result);
 void to_json(nlohmann::json &j, const std::vector<qrcode::detect::Result> &results);
 void to_json(nlohmann::json &j, const qrcode::detect::Value &value);

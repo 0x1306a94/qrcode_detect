@@ -12,14 +12,16 @@
 namespace context {
 class Context {
   public:
-    explicit Context(const std::string model_dir);
+    explicit Context(const std::string model_dir, const std::string cache_dir = "");
     static Context *Current();
-    static void Init(const std::string model_dir);
+    static void Init(const std::string model_dir, const std::string cache_dir = "");
 
     std::string GetModelDir() const;
+    std::string GetCacheDir() const;
 
   private:
     std::string m_model_dir;
+    std::string m_cache_dir;
 };
 };  // namespace context
 
