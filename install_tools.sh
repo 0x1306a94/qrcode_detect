@@ -2,7 +2,7 @@
 
 cd $(dirname $0)
 
-if [[ `uname` == 'Darwin' ]]; then
+if [[ $(uname -s) == Darwin ]]; then
   MAC_REQUIRED_TOOLS="0x1306a94/tap/depctl"
   for TOOL in ${MAC_REQUIRED_TOOLS[@]}; do
     if [ ! $(which $TOOL) ]; then
@@ -15,13 +15,13 @@ if [[ `uname` == 'Darwin' ]]; then
     fi
   done
 
-elif [[ `uname` == 'Linux' ]]; then
-
+elif [[ $(uname -s) == Linux && ! -f "install_tools/depctl/depctl" ]]; then
+  
   if [ ! -d "install_tools/depctl" ]; then
     mkdir -p install_tools/depctl
   fi
 
-  wget https://github.com/0x1306a94/depctl/releases/download/v1.4.7/depctl-linux-x86_64.tar.gz -O install_tools/depctl-linux-x86_64.tar.gz
+  wget https://github.com/0x1306a94/depctl/releases/download/v1.4.8/depctl-linux-x86_64.tar.gz -O install_tools/depctl-linux-x86_64.tar.gz
   tar -xzf install_tools/depctl-linux-x86_64.tar.gz -C install_tools/depctl
   chmod +x install_tools/depctl/depctl
   
