@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   qrcode_detect:
     image: qrcode_detect:v1.0.0

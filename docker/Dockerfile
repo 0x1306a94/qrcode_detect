@@ -10,8 +10,13 @@ EXPOSE 9999
 # 安装依赖，zbar需要
 RUN apt-get update && apt-get install -y libjpeg-turbo8
 
-ENV PATH=/opt/qrcode_detect/bin:$PATH
-ENV LD_LIBRARY_PATH=/opt/qrcode_detect/lib
+RUN ln -s /opt/qrcode_detect/config/qrcode_detect.conf /etc/ld.so.conf.d/qrcode_detect.conf && \
+    ldconfig && \
+    ln -s /opt/qrcode_detect/bin/qrcode_detect_server /usr/local/bin/qrcode_detect_server && \
+    ln -s /opt/qrcode_detect/bin/qrcode_detect_cli /usr/local/bin/qrcode_detect_cli
+
+# ENV PATH=/opt/qrcode_detect/bin:$PATH
+# ENV LD_LIBRARY_PATH=/opt/qrcode_detect/lib
 ENV LANG=en_US.UTF-8
 ENV LC_TIME=en_DK.UTF-8
 
