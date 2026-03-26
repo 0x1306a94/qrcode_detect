@@ -17,6 +17,29 @@
 namespace qrcode {
 namespace detect {
 
+namespace {
+
+std::vector<int> CalculateStarts(int imageSize, int windowSize, int stepSize) {
+    std::vector<int> starts;
+
+    if (imageSize <= 0 || windowSize <= 0 || stepSize <= 0) {
+        return starts;
+    }
+
+    int lastStart = imageSize - windowSize;
+    for (int start = 0; start <= lastStart; start += stepSize) {
+        starts.push_back(start);
+    }
+
+    if (starts.empty() || starts.back() != lastStart) {
+        starts.push_back(lastStart);
+    }
+
+    return starts;
+}
+
+}  // namespace
+
 SlidingWindowDetector::SlidingWindowDetector(std::shared_ptr<Detector> detector, int maxWindowSize, float overlapRatio)
     : detector_(std::move(detector))
     , maxWindowSize_(maxWindowSize)
@@ -28,51 +51,29 @@ SlidingWindowDetector::~SlidingWindowDetector() = default;
 std::vector<Rect> SlidingWindowDetector::CalculateWindows(int imageWidth, int imageHeight, int maxWindowSize, float overlapRatio) {
     std::vector<Rect> windows;
 
-    // Edge case: if image is smaller than window, just return one full image window
-    if (imageWidth <= maxWindowSize && imageHeight <= maxWindowSize) {
-        windows.emplace_back(0, 0, imageWidth, imageHeight);
+    if (imageWidth <= 0 || imageHeight <= 0 || maxWindowSize <= 0) {
         return windows;
     }
 
+    int actualWindowWidth = std::min(imageWidth, maxWindowSize);
+    int actualWindowHeight = std::min(imageHeight, maxWindowSize);
+
     // Calculate step size (with overlap)
-    int stepX = static_cast<int>(maxWindowSize * (1.0f - overlapRatio));
-    int stepY = static_cast<int>(maxWindowSize * (1.0f - overlapRatio));
+    int stepX = static_cast<int>(actualWindowWidth * (1.0f - overlapRatio));
+    int stepY = static_cast<int>(actualWindowHeight * (1.0f - overlapRatio));
 
     // Ensure step is at least 1 to avoid infinite loop
     stepX = std::max(stepX, 1);
     stepY = std::max(stepY, 1);
 
-    for (int y = 0;; y += stepY) {
-        int windowY = y;
-        int windowHeight = std::min(maxWindowSize, imageHeight - y);
+    auto xStarts = CalculateStarts(imageWidth, actualWindowWidth, stepX);
+    auto yStarts = CalculateStarts(imageHeight, actualWindowHeight, stepY);
 
-        // If remaining height is too small, snap to bottom edge
-        if (imageHeight - y < maxWindowSize) {
-            windowY = imageHeight - maxWindowSize;
-            windowHeight = maxWindowSize;
+    windows.reserve(xStarts.size() * yStarts.size());
+    for (int windowY : yStarts) {
+        for (int windowX : xStarts) {
+            windows.emplace_back(windowX, windowY, actualWindowWidth, actualWindowHeight);
         }
-
-        bool yFinished = (windowY + windowHeight >= imageHeight);
-
-        for (int x = 0;; x += stepX) {
-            int windowX = x;
-            int windowWidth = std::min(maxWindowSize, imageWidth - x);
-
-            // If remaining width is too small, snap to right edge
-            if (imageWidth - x < maxWindowSize) {
-                windowX = imageWidth - maxWindowSize;
-                windowWidth = maxWindowSize;
-            }
-
-            windows.emplace_back(windowX, windowY, windowWidth, windowHeight);
-
-            bool xFinished = (windowX + windowWidth >= imageWidth);
-            if (xFinished)
-                break;
-        }
-
-        if (yFinished)
-            break;
     }
 
     return windows;
