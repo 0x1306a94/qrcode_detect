@@ -52,7 +52,7 @@ class Yolov3Detector::Implement {
     ~Implement() {
     }
 
-    std::optional<Result> Detect(const cv::Mat &image) {
+    std::optional<Result> Detect(const cv::Mat &image, const std::string &traceId) {
 
         spdlog::stopwatch sw;
 
@@ -127,7 +127,7 @@ class Yolov3Detector::Implement {
         }
 
         auto elapsed = duration_cast<milliseconds>(sw.elapsed());
-        SPDLOG_TRACE("detect elapsed: {}", elapsed);
+        SPDLOG_INFO("[traceId={}] detect elapsed: {}", traceId, elapsed);
 
         return Result(static_cast<uint64_t>(elapsed.count()), std::move(values));
     }
@@ -143,8 +143,8 @@ Yolov3Detector::~Yolov3Detector() {
     SPDLOG_TRACE("Destory {}", fmt::ptr(this));
 }
 
-std::optional<Result> Yolov3Detector::detectImpl(const cv::Mat &image) {
-    return m_impl->Detect(image);
+std::optional<Result> Yolov3Detector::detectImpl(const cv::Mat &image, const std::string &traceId) {
+    return m_impl->Detect(image, traceId);
 }
 
 };  // namespace detect

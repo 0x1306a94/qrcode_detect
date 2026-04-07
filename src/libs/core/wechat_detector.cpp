@@ -44,7 +44,7 @@ class WechatDetector::Implement {
     ~Implement() {
     }
 
-    std::optional<Result> Detect(const cv::Mat &image) {
+    std::optional<Result> Detect(const cv::Mat &image, const std::string &traceId) {
         if (!detector) {
             return std::nullopt;
         }
@@ -58,7 +58,7 @@ class WechatDetector::Implement {
         std::vector<std::string> contents = detector->detectAndDecode(grayImage, points);
         auto elapsed = duration_cast<milliseconds>(sw.elapsed());
         sw.reset();
-        SPDLOG_TRACE("detect elapsed: {}", elapsed);
+        SPDLOG_INFO("[traceId={}] detect elapsed: {}", traceId, elapsed);
         Result result(static_cast<uint64_t>(elapsed.count()));
         std::vector<Value> values;
         for (int i = 0; i < points.size(); i++) {
@@ -80,8 +80,8 @@ WechatDetector::~WechatDetector() {
     SPDLOG_TRACE("Destory {}", fmt::ptr(this));
 }
 
-std::optional<Result> WechatDetector::detectImpl(const cv::Mat &image) {
-    return m_impl->Detect(image);
+std::optional<Result> WechatDetector::detectImpl(const cv::Mat &image, const std::string &traceId) {
+    return m_impl->Detect(image, traceId);
 }
 
 };  // namespace detect

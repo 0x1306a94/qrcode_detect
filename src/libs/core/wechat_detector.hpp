@@ -21,7 +21,7 @@ class WechatDetector : public Detector {
     virtual ~WechatDetector();
 
   protected:
-    std::optional<Result> detectImpl(const cv::Mat &image) override;
+    std::optional<Result> detectImpl(const cv::Mat &image, const std::string &traceId) override;
 
     friend class SlidingWindowDetector;
 

@@ -16,11 +16,11 @@
 namespace qrcode {
 namespace detect {
 
-std::optional<Result> Detector::detect(std::shared_ptr<cv::Mat> image) {
+std::optional<Result> Detector::detect(std::shared_ptr<cv::Mat> image, const std::string &traceId) {
     if (!image || image->empty()) {
         return std::nullopt;
     }
-    return detectImpl(*image);
+    return detectImpl(*image, traceId);
 }
 
 }  // namespace detect

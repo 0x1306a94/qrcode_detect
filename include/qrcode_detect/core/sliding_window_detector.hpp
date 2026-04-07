@@ -23,7 +23,7 @@ class SlidingWindowDetector : public Detector {
     static std::vector<Rect> CalculateWindows(int imageWidth, int imageHeight, int maxWindowSize = 1280, float overlapRatio = 0.2f);
 
   protected:
-    std::optional<Result> detectImpl(const cv::Mat &image) override;
+    std::optional<Result> detectImpl(const cv::Mat &image, const std::string &traceId) override;
 
   private:
     /// Map window coordinates to original image coordinates

@@ -29,11 +29,11 @@ class Detector {
     virtual ~Detector() = default;
 
     /// Detect QR codes from shared_ptr<cv::Mat>
-    std::optional<Result> detect(std::shared_ptr<cv::Mat> image);
+    std::optional<Result> detect(std::shared_ptr<cv::Mat> image, const std::string &traceId = "");
 
   protected:
     /// Actual detection implementation, to be overridden by subclasses
-    virtual std::optional<Result> detectImpl(const cv::Mat &image) = 0;
+    virtual std::optional<Result> detectImpl(const cv::Mat &image, const std::string &traceId) = 0;
 
   private:
     // Allow SlidingWindowDetector to access detectImpl

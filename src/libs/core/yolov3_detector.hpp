@@ -21,7 +21,7 @@ class Yolov3Detector : public Detector {
     virtual ~Yolov3Detector();
 
   protected:
-    std::optional<Result> detectImpl(const cv::Mat &image) override;
+    std::optional<Result> detectImpl(const cv::Mat &image, const std::string &traceId) override;
 
     friend class SlidingWindowDetector;
 

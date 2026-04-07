@@ -38,7 +38,7 @@ class OpencvDetector::Implement {
     ~Implement() {
     }
 
-    std::optional<Result> Detect(const cv::Mat &image) {
+    std::optional<Result> Detect(const cv::Mat &image, const std::string &traceId) {
 
         spdlog::stopwatch sw;
 
@@ -50,7 +50,7 @@ class OpencvDetector::Implement {
         std::vector<std::string> contents;
         detector->detectAndDecodeMulti(grayImage, contents, points);
         auto elapsed = duration_cast<milliseconds>(sw.elapsed());
-        SPDLOG_TRACE("detect elapsed: {}", elapsed);
+        SPDLOG_INFO("[traceId={}] detect elapsed: {}", traceId, elapsed);
         sw.reset();
         std::vector<Value> values;
         for (int idx = 0; idx < points.rows; idx++) {
@@ -71,8 +71,8 @@ OpencvDetector::~OpencvDetector() {
     SPDLOG_TRACE("Destory {}", fmt::ptr(this));
 }
 
-std::optional<Result> OpencvDetector::detectImpl(const cv::Mat &image) {
-    return m_impl->Detect(image);
+std::optional<Result> OpencvDetector::detectImpl(const cv::Mat &image, const std::string &traceId) {
+    return m_impl->Detect(image, traceId);
 }
 };  // namespace detect
 };  // namespace qrcode

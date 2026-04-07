@@ -20,7 +20,7 @@ class OpencvDetector : public Detector {
     virtual ~OpencvDetector();
 
   protected:
-    std::optional<Result> detectImpl(const cv::Mat &image) override;
+    std::optional<Result> detectImpl(const cv::Mat &image, const std::string &traceId) override;
 
     friend class SlidingWindowDetector;
 

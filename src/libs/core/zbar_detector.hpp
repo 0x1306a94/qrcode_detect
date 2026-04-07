@@ -20,7 +20,7 @@ class ZbarDetector : public Detector {
     virtual ~ZbarDetector();
 
   protected:
-    std::optional<Result> detectImpl(const cv::Mat &image) override;
+    std::optional<Result> detectImpl(const cv::Mat &image, const std::string &traceId) override;
 
     friend class SlidingWindowDetector;
 

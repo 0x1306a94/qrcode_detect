@@ -146,21 +146,21 @@ Result SlidingWindowDetector::mergeResults(std::vector<Result> &&results) const 
     return Result(totalElapsed, std::move(mergedValues));
 }
 
-std::optional<Result> SlidingWindowDetector::detectImpl(const cv::Mat &image) {
+std::optional<Result> SlidingWindowDetector::detectImpl(const cv::Mat &image, const std::string &traceId) {
     int imgWidth = image.cols;
     int imgHeight = image.rows;
     int maxDim = std::max(imgWidth, imgHeight);
 
     // If image is small enough, use direct detection
     if (maxDim <= maxWindowSize_) {
-        return detector_->detectImpl(image);
+        return detector_->detectImpl(image, traceId);
     }
 
     // Use sliding window for large images
-    SPDLOG_INFO("Using sliding window detection for large image: {}x{}", imgWidth, imgHeight);
+    SPDLOG_INFO("[traceId={}] Using sliding window detection for large image: {}x{}", traceId, imgWidth, imgHeight);
 
     auto windows = CalculateWindows(imgWidth, imgHeight, maxWindowSize_, overlapRatio_);
-    SPDLOG_INFO("Created {} sliding windows", windows.size());
+    SPDLOG_INFO("[traceId={}] Created {} sliding windows", traceId, windows.size());
 
     std::vector<Result> windowResults;
     windowResults.reserve(windows.size());
@@ -171,7 +171,7 @@ std::optional<Result> SlidingWindowDetector::detectImpl(const cv::Mat &image) {
         cv::Mat windowImage = image(roi);
 
         // Detect in window
-        auto windowResult = detector_->detectImpl(windowImage);
+        auto windowResult = detector_->detectImpl(windowImage, traceId);
 
         if (windowResult) {
             // Map coordinates to original image

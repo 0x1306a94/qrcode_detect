@@ -39,7 +39,7 @@ class ZbarDetector::Implement {
     ~Implement() {
     }
 
-    std::optional<Result> Detect(const cv::Mat &image) {
+    std::optional<Result> Detect(const cv::Mat &image, const std::string &traceId) {
 
         spdlog::stopwatch sw;
 
@@ -52,7 +52,7 @@ class ZbarDetector::Implement {
         zbar::Image zimage(width, height, "Y800", raw, width * height);
         int n = scanner.scan(zimage);
         auto elapsed = duration_cast<milliseconds>(sw.elapsed());
-        SPDLOG_TRACE("detect elapsed: {}", elapsed);
+        SPDLOG_INFO("[traceId={}] detect elapsed: {} result_count: {}", traceId, elapsed, n);
         sw.reset();
 
         std::vector<Value> values;
@@ -83,8 +83,8 @@ ZbarDetector::~ZbarDetector() {
     SPDLOG_TRACE("Destory {}", fmt::ptr(this));
 }
 
-std::optional<Result> ZbarDetector::detectImpl(const cv::Mat &image) {
-    return m_impl->Detect(image);
+std::optional<Result> ZbarDetector::detectImpl(const cv::Mat &image, const std::string &traceId) {
+    return m_impl->Detect(image, traceId);
 }
 };  // namespace detect
 };  // namespace qrcode
