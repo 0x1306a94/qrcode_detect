@@ -167,6 +167,11 @@ int main(int argc, char *argv[]) {
         .implicit_value(true)
         .help("run daemon.");
 
+    program.add_argument("--detect-worker-count")
+        .default_value(context::Context::DefaultDetectWorkerCount())
+        .scan<'i', std::size_t>()
+        .help("worker thread count for detect url batch tasks.");
+
     program.add_argument("--pid")
         .help("pidfile path.");
 
@@ -210,6 +215,7 @@ int main(int argc, char *argv[]) {
     if (program.is_used("--cache")) {
         cache_dir = program.get<std::string>("--cache");
     }
+    std::size_t detect_worker_count = program.get<std::size_t>("--detect-worker-count");
 
     bool daemon = program.get<bool>("daemon");
     if (daemon && !qrcode::start_daemon()) {
@@ -237,9 +243,10 @@ int main(int argc, char *argv[]) {
     signal(SIGQUIT, signal_exit_handler);
 
     setup_log(log_dir);
-    context::Context::Init(model_dir, cache_dir);
+    context::Context::Init(model_dir, cache_dir, detect_worker_count);
 
     SPDLOG_INFO("start http server 0.0.0.0: {}", port);
+    SPDLOG_INFO("detect worker count: {}", detect_worker_count);
 
     hlog_set_handler(libhv_log_handler);
 

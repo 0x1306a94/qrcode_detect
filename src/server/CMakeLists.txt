@@ -6,6 +6,8 @@ message(STATUS "Configuration: ${PROJECT_NAME}")
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+enable_testing()
+
 if(APPLE)
   set(CMAKE_INSTALL_RPATH "@executable_path/../lib")
   set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
@@ -64,6 +66,18 @@ if(APPLE)
 elseif(UNIX)
   target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_DL_LIBS})
 endif()
+
+add_executable(${PROJECT_NAME}_ordered_worker_pool_test
+  tests/ordered_worker_pool_test.cpp
+)
+target_include_directories(${PROJECT_NAME}_ordered_worker_pool_test PRIVATE
+./
+)
+if(UNIX)
+  find_package(Threads REQUIRED)
+  target_link_libraries(${PROJECT_NAME}_ordered_worker_pool_test PRIVATE Threads::Threads)
+endif()
+add_test(NAME ${PROJECT_NAME}_ordered_worker_pool_test COMMAND ${PROJECT_NAME}_ordered_worker_pool_test)
 
 # 便于测试
 add_custom_command(TARGET ${PROJECT_NAME}

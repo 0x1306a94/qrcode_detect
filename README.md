@@ -90,7 +90,7 @@ qrcode_detect_cli visualize -i ./large_image.jpg -o ./windows_preview.jpg
 ### 运行服务端
 
 ```bash
-Usage: qrcode_detect_server [--help] [--version] --port VAR --model VAR [--log VAR] [--daemon] [--pid VAR] [-V] [--verbose] [-c VAR]
+Usage: qrcode_detect_server [--help] [--version] --port VAR --model VAR [--log VAR] [--daemon] [--detect-worker-count VAR] [--pid VAR] [-V] [--verbose] [-c VAR]
 
 Optional arguments:
   -h, --help     shows help message and exits
@@ -100,6 +100,8 @@ Optional arguments:
   -c, --cache    cache directory for URL detection results.
   -l, --log      log file directory.
   -d, --daemon   run daemon.
+  --detect-worker-count
+                 worker thread count for detect url batch tasks. Default: CPU * 2.
   --pid          pidfile path.
   -V             Set log level to critical, err, warn, info, debug, trace.
   --verbose      Set log level to trace.
@@ -113,6 +115,9 @@ Optional arguments:
 
 # 运行（启用缓存）
 ./install/bin/qrcode_detect_server --port 9999 --model ./install/models --cache ./cache
+
+# 运行（指定批量 URL 检测线程数）
+./install/bin/qrcode_detect_server --port 9999 --model ./install/models --detect-worker-count 16
 
 # 或通过环境变量配置缓存目录
 export QRCODE_DETECT_CACHE_DIR=/path/to/cache
@@ -334,4 +339,3 @@ curl --location 'http://127.0.0.1:9999/detect' \
 ```
 
 第一次请求会执行检测并缓存结果，后续相同参数的请求将直接返回缓存结果。
-

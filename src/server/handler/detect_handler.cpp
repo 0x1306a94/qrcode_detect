@@ -21,6 +21,7 @@
 #include <hv/json.hpp>
 
 #include "common_handler.hpp"
+#include "ordered_worker_pool.hpp"
 
 #include "../MD5.h"
 #include "../image_downloader.hpp"
@@ -64,16 +65,7 @@ static std::string computeCacheKey(const std::string &url, int type, int maxWind
     return std::string(hex);
 }
 
-static std::string getCacheDir() {
-    auto ctx = context::Context::Current();
-    if (!ctx) {
-        return "";
-    }
-    return ctx->GetCacheDir();
-}
-
-static bool loadCache(const std::string &cacheKey, qrcode::detect::Result &result) {
-    std::string cacheDir = getCacheDir();
+static bool loadCache(const std::string &cacheDir, const std::string &cacheKey, qrcode::detect::Result &result) {
     if (cacheDir.empty()) {
         return false;
     }
@@ -99,8 +91,7 @@ static bool loadCache(const std::string &cacheKey, qrcode::detect::Result &resul
     }
 }
 
-static bool saveCache(const std::string &cacheKey, const qrcode::detect::Result &result) {
-    std::string cacheDir = getCacheDir();
+static bool saveCache(const std::string &cacheDir, const std::string &cacheKey, const qrcode::detect::Result &result) {
     if (cacheDir.empty()) {
         return false;
     }
@@ -153,11 +144,9 @@ int Detect::detect(const HttpContextPtr &ctx) {
         return SendFail(ctx, 400, err.what());
     }
 
-    auto detector = DetectorFactory(params.type, *context::Context::Current(), params.maxWindowSize, params.overlapRatio);
-    if (!detector) {
-        SPDLOG_ERROR("create detector fial type: {}", static_cast<int>(params.type));
-        auto msg = fmt::format("create detector fial type: {}", static_cast<int>(params.type));
-        return SendFail(ctx, 400, msg);
+    auto currentContext = context::Context::Current();
+    if (!currentContext) {
+        return SendFail(ctx, 500, "context not initialized");
     }
 
     do {
@@ -165,56 +154,67 @@ int Detect::detect(const HttpContextPtr &ctx) {
             break;
         }
 
-        std::vector<qrcode::detect::Result> results;
-        std::string cacheDir = getCacheDir();
+        std::string cacheDir = currentContext->GetCacheDir();
         bool useCache = !cacheDir.empty() && params.cache;
 
-        for (const auto &url : params.url) {
-            if (!(url.find("http://") == 0 || url.find("https://") == 0)) {
-                //                return SendFail(ctx, 400, fmt::format("{} Invalid url", url));
-                results.emplace_back(0u);
-                continue;
-            }
+        try {
+            auto results = currentContext->GetDetectWorkerPool().run(
+                params.url.size(),
+                [&](std::size_t index) {
+                    const auto &url = params.url[index];
+                    auto detector = DetectorFactory(params.type, *currentContext, params.maxWindowSize, params.overlapRatio);
+                    if (!detector) {
+                        throw std::runtime_error(fmt::format("create detector fial type: {}", static_cast<int>(params.type)));
+                    }
 
-            // Try to load from cache
-            if (useCache) {
-                std::string cacheKey = computeCacheKey(url, static_cast<int>(params.type), params.maxWindowSize, params.overlapRatio);
-                qrcode::detect::Result cachedResult{0};
-                if (loadCache(cacheKey, cachedResult)) {
-                    results.push_back(cachedResult);
-                    continue;
-                }
-            }
+                    if (!(url.find("http://") == 0 || url.find("https://") == 0)) {
+                        return qrcode::detect::Result(0u);
+                    }
 
-            qrcode::common::AutoBuffer buffer;
-            spdlog::stopwatch sw;
-            auto size = qrcode::download::image_from_url(url, buffer);
-            SPDLOG_TRACE("加载网络图片: url: {} elapsed: {}", url, duration_cast<milliseconds>(sw.elapsed()));
-            if (size == 0) {
-                results.emplace_back(0u);
-                continue;
-            }
-            sw.reset();
+                    std::string cacheKey;
+                    if (useCache) {
+                        cacheKey = computeCacheKey(url, static_cast<int>(params.type), params.maxWindowSize, params.overlapRatio);
+                        qrcode::detect::Result cachedResult{0};
+                        if (loadCache(cacheDir, cacheKey, cachedResult)) {
+                            return cachedResult;
+                        }
+                    }
 
-            auto image = qrcode::detect::ImageLoader::fromBuffer(buffer);
-            auto result = detector->detect(image);
-            if (result) {
-                results.push_back(result.value());
-                // Save to cache
-                if (useCache) {
-                    std::string cacheKey = computeCacheKey(url, static_cast<int>(params.type), params.maxWindowSize, params.overlapRatio);
-                    saveCache(cacheKey, result.value());
-                }
-            } else {
-                results.emplace_back(0u);
-            }
+                    qrcode::common::AutoBuffer buffer;
+                    spdlog::stopwatch sw;
+                    auto size = qrcode::download::image_from_url(url, buffer);
+                    SPDLOG_TRACE("加载网络图片: url: {} elapsed: {}", url, duration_cast<milliseconds>(sw.elapsed()));
+                    if (size == 0) {
+                        return qrcode::detect::Result(0u);
+                    }
+
+                    auto image = qrcode::detect::ImageLoader::fromBuffer(buffer);
+                    auto result = detector->detect(image);
+                    if (!result) {
+                        return qrcode::detect::Result(0u);
+                    }
+
+                    if (useCache) {
+                        saveCache(cacheDir, cacheKey, result.value());
+                    }
+                    return result.value();
+                });
+            return SendSuccess(ctx, results);
+        } catch (const std::exception &err) {
+            SPDLOG_ERROR("{}", err.what());
+            return SendFail(ctx, 400, err.what());
         }
-        return SendSuccess(ctx, results);
     } while (0);
 
     do {
         if (params.base64.empty()) {
             break;
+        }
+        auto detector = DetectorFactory(params.type, *currentContext, params.maxWindowSize, params.overlapRatio);
+        if (!detector) {
+            SPDLOG_ERROR("create detector fial type: {}", static_cast<int>(params.type));
+            auto msg = fmt::format("create detector fial type: {}", static_cast<int>(params.type));
+            return SendFail(ctx, 400, msg);
         }
         std::vector<qrcode::detect::Result> results;
         for (const auto &item : params.base64) {
