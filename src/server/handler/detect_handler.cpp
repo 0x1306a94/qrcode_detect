@@ -224,6 +224,7 @@ int Detect::detect(const HttpContextPtr &ctx) {
                         return qrcode::detect::Result(0u);
                     }
 
+                    SPDLOG_INFO("[traceId={}] 检测网络图片: url: {} elapsed: {}ms", traceId, url, result->elapsed);
                     if (useCache) {
                         saveCache(cacheDir, cacheKey, traceId, result.value());
                     }
@@ -247,14 +248,17 @@ int Detect::detect(const HttpContextPtr &ctx) {
             return SendFail(ctx, 400, msg);
         }
         std::vector<qrcode::detect::Result> results;
+        size_t index = 0;
         for (const auto &item : params.base64) {
             auto image = qrcode::detect::ImageLoader::fromBase64(item);
             auto result = detector->detect(image, traceId);
             if (result) {
+                SPDLOG_INFO("[traceId={}] 检测base64图片: index: {} elapsed: {}ms", traceId, index, result->elapsed);
                 results.push_back(result.value());
             } else {
                 results.emplace_back(0);
             }
+            index++;
         }
         return SendSuccess(ctx, results);
     } while (0);
@@ -281,6 +285,7 @@ int Detect::detectFile(const HttpContextPtr &ctx) {
     auto image = qrcode::detect::ImageLoader::fromBytes((const unsigned char *)content.data(), content.size());
     auto result = detector->detect(image, traceId);
     if (result) {
+        SPDLOG_INFO("[traceId={}] 检测文件图片: elapsed: {}ms", traceId, result->elapsed);
         return SendSuccess(ctx, result.value());
     }
     return SendSuccess(ctx, qrcode::detect::Result(0));
