@@ -1,7 +1,9 @@
+#include <iostream>
 #include <memory>
 #include <random>
 #include <sstream>
 #include <string_view>
+#include <vector>
 
 #ifndef SPDLOG_ACTIVE_LEVEL
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
@@ -129,6 +131,35 @@ void print_result(const qrcode::detect::Result &result) {
     std::cout << json.dump(4) << std::endl;
 }
 
+void print_opencv_runtime_feature(const std::string &name, int feature) {
+    std::cout << name << ": " << (cv::checkHardwareSupport(feature) ? "ON" : "OFF") << std::endl;
+}
+
+void print_opencv_info(bool verbose) {
+    std::cout << "opencv_version: " << CV_VERSION << std::endl;
+    std::cout << "opencv_version_string: " << cv::getVersionString() << std::endl;
+    std::cout << "opencv_optimized: " << (cv::useOptimized() ? "ON" : "OFF") << std::endl;
+    std::cout << "opencv_threads: " << cv::getNumThreads() << std::endl;
+
+    print_opencv_runtime_feature("cpu_sse3", CV_CPU_SSE3);
+    print_opencv_runtime_feature("cpu_ssse3", CV_CPU_SSSE3);
+    print_opencv_runtime_feature("cpu_sse4_1", CV_CPU_SSE4_1);
+    print_opencv_runtime_feature("cpu_sse4_2", CV_CPU_SSE4_2);
+    print_opencv_runtime_feature("cpu_avx", CV_CPU_AVX);
+    print_opencv_runtime_feature("cpu_fp16", CV_CPU_FP16);
+    print_opencv_runtime_feature("cpu_avx2", CV_CPU_AVX2);
+    print_opencv_runtime_feature("cpu_avx512_skx", CV_CPU_AVX512_SKX);
+    print_opencv_runtime_feature("cpu_neon", CV_CPU_NEON);
+    print_opencv_runtime_feature("cpu_neon_dotprod", CV_CPU_NEON_DOTPROD);
+    print_opencv_runtime_feature("cpu_neon_fp16", CV_CPU_NEON_FP16);
+    print_opencv_runtime_feature("cpu_neon_bf16", CV_CPU_NEON_BF16);
+
+    if (verbose) {
+        std::cout << "\n"
+                  << cv::getBuildInformation() << std::endl;
+    }
+}
+
 static int LOG_verbosity = SPDLOG_LEVEL_OFF;
 
 int main(int argc, char *argv[]) {
@@ -145,6 +176,7 @@ int main(int argc, char *argv[]) {
     // Add subcommands
     argparse::ArgumentParser detect_cmd("detect", ss.str(), argparse::default_arguments::help, true, std::cerr);
     argparse::ArgumentParser visualize_cmd("visualize", ss.str(), argparse::default_arguments::help, true, std::cerr);
+    argparse::ArgumentParser opencv_info_cmd("opencv_info", ss.str(), argparse::default_arguments::help, true, std::cerr);
 
     // detect subcommand arguments
     detect_cmd.add_argument("-m", "--model")
@@ -212,8 +244,14 @@ int main(int argc, char *argv[]) {
         .required()
         .help("output image path.");
 
+    opencv_info_cmd.add_argument("--verbose")
+        .default_value(false)
+        .implicit_value(true)
+        .help("print full OpenCV build information.");
+
     program.add_subparser(detect_cmd);
     program.add_subparser(visualize_cmd);
+    program.add_subparser(opencv_info_cmd);
 
     try {
         program.parse_args(argc, argv);
@@ -337,6 +375,12 @@ int main(int argc, char *argv[]) {
             std::cerr << err.what() << std::endl;
             return EXIT_FAILURE;
         }
+    }
+
+    if (program.is_subcommand_used("opencv_info")) {
+        bool verbose = opencv_info_cmd.get<bool>("--verbose");
+        print_opencv_info(verbose);
+        return EXIT_SUCCESS;
     }
 
     // No subcommand specified, show help
